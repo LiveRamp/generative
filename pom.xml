@@ -4,6 +4,7 @@
 
   <!--TODO replace with your project name-->
   <artifactId>example_project</artifactId>
+  <version>${snapshot.version}</version>
 
   <parent>
     <groupId>com.liveramp</groupId>
