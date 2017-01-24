@@ -11,3 +11,10 @@ test:
   host: 127.0.0.1
   username: root
   password:
+
+workflow_db_test:
+  database: workflow_db
+  adapter: mysql
+  host: 127.0.0.1
+  username: root
+  password:
