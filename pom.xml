@@ -1,9 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?><project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <!--TODO replace with your project name-->
   <artifactId>audience_data_distribution_service</artifactId>
   <version>1.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
 
   <parent>
     <groupId>com.liveramp</groupId>
@@ -11,27 +13,16 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
 
-  <!--TODO if your project needs rldb set up for builds. remove this block and uncomment the db_schemas dependency below-->
   <properties>
-    <skip.db.init>false</skip.db.init>
+    <skip.db.init>true</skip.db.init>
   </properties>
 
-  <dependencies>
-    <!--TODO add project dependencies here-->
-
-    <!--TODO if your project will need a database setup for builds, uncomment this-->
-    <!--<dependency>-->
-      <!--<groupId>com.liveramp</groupId>-->
-      <!--<artifactId>db_schemas</artifactId>-->
-      <!--<version>1.0-SNAPSHOT</version>-->
-    <!--</dependency>-->
-
-  <dependency>
-      <groupId>com.liveramp</groupId>
-      <artifactId>db_schemas</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-  </dependencies>
+  <modules>
+    <module>audience_data_distribution_service_daemon</module>
+    <module>audience_data_distribution_service_server</module>
+    <module>audience_data_distribution_service_lib</module>
+    <module>audience_data_distribution_service_client</module>
+  </modules>
 
   <repositories>
     <repository>
