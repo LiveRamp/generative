@@ -13,7 +13,7 @@ A test using Generative:
       Integer shouldBeEven = theInt * 2;
       assertTrue(shouldBeEven % 2 == 0);
     });
-  }tic
+  }
 ```
 
 The primary entry point is the Generative.runTests static method, which runs a given test block a certain number of times. A test block accepts 2 arguments - a test number, and a Generative object used to create the various inputs to the test. The Generative object can create a number of different primtives with random values. These values can be used check various properties of your code and verify that the properties hold regardless of which value is chosen.
@@ -42,7 +42,7 @@ Integer lessThanNBCouldBeNegative = g.anyIntegerLessThan(n);
 'nuff said.
 
 #### Seed and variable management
-One really important aspect of generative testing is making sure you can reproduce a test that fails so that you can find an fix the issue. Generating values from a Generative object ensures you use a consistent seed for a given test, and always prints the seed of a failing test in the exception message. Additionally, for getting nice error reports, you can name variables:
+One really important aspect of generative testing is making sure you can reproduce a test that fails so that you can find and fix the issue. Generating values from a Generative object ensures you use a consistent seed for a given test, and always prints the seed of a failing test in the exception message. Additionally, for getting nice error reports, you can name variables:
 ```
  runTests(100, (testNumber, g) -> {
         Integer theInt = g.namedVar("The Number").anyPositiveIntegerLessThan(50);
@@ -60,6 +60,7 @@ Multiple : 3
 
 java.lang.RuntimeException: Shrunken test case failed with seed: 1207756009:1f8b080000000000000033d2310200c2d2482903000000
 ```
+These seeds can be passed as additional arguments to runTests to ensure that once you've fixed a specific example, that specific example does not regress.
 
 #### Shrinking
 
