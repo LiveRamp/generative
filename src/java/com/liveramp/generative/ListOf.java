@@ -1,11 +1,9 @@
 package com.liveramp.generative;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import com.google.common.collect.Lists;
 
 public class ListOf<T> implements Arbitrary<List<T>> {
 
@@ -24,13 +22,7 @@ public class ListOf<T> implements Arbitrary<List<T>> {
 
   @Override
   public List<List<T>> shrink(List<T> val) {
-    List<T> shrinkElements = val.stream().map(v -> {
-      List<T> shrink = internal.shrink(v);
-      return shrink.isEmpty() ? v : shrink.get(0);
-    }).collect(Collectors.toList());
-
-    List<List<T>> result = Lists.newArrayList();
-    result.add(shrinkElements);
-    return result;
+    return AbitraryUtil.shrinkCollection(val, this.internal, Function.identity());
   }
+
 }

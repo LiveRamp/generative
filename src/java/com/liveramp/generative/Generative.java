@@ -3,38 +3,44 @@ package com.liveramp.generative;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Generative {
 
-  private int index;
   private long seed = 0;
   private Random random;
+
+  //For dealing with shrinking
+  private AtomicInteger index;
   private List<Integer> shrinkIndices;
-  private boolean lastShrinkExhausted = false;
-  private Map<String, Object> generated = Maps.newHashMap();
-  private String nextName;
+  private AtomicBoolean lastShrinkExhausted = new AtomicBoolean(false);
+
+  //For printing nice names for generated variables
+  private List<Pair<String, Object>> generated = Lists.newArrayList();
+  private String varName;
+
+  //Used for generation of "helper" random values that don't need names
+  private Generative gen;
 
   public Generative(long seed) {
     this(seed, Lists.newArrayList());
@@ -44,94 +50,105 @@ public class Generative {
     this.seed = seed;
     this.random = new Random(seed);
     this.shrinkIndices = shrinkIndices;
-    this.index = 0;
+    this.index = new AtomicInteger(0);
+    this.gen = this;
+  }
+
+  //There's almost certainly a less dumb way to do this
+  public Generative(Generative g, String name) {
+    this.seed = g.seed;
+    this.random = g.random;
+    this.shrinkIndices = g.shrinkIndices;
+    this.index = g.index;
+    this.generated = g.generated;
+    this.varName = name;
+    this.lastShrinkExhausted = g.lastShrinkExhausted;
+    this.gen = g;
   }
 
   public Generative namedVar(String name) {
-    this.nextName = name;
-    return this;
+    return new Generative(this, name);
   }
 
-  private String getName() {
-    if (nextName != null) {
-      String n = nextName;
-      nextName = null;
-      return n;
-    } else {
-      return "var" + index;
-    }
-  }
-
-
-  public <T> T gen(Arbitrary<T> arbitrary) {
+  public <T> T generate(Arbitrary<T> arbitrary) {
     T val = arbitrary.get(random);
-    int currentIndex = this.index;
-    index++;
 
+    Optional<T> t = attemptShrink(arbitrary, val, index.get());
+
+    T returnVal = t.orElse(val);
+
+    saveNamedVar(returnVal);
+    index.incrementAndGet();
+    return returnVal;
+  }
+
+  @NotNull
+  private <T> Optional<T> attemptShrink(Arbitrary<T> arbitrary, T val, int currentIndex) {
     if (currentIndex < shrinkIndices.size() && shrinkIndices.get(currentIndex) >= 0) {
       Integer shrinkIndex = shrinkIndices.get(currentIndex);
       List<T> shrinks = arbitrary.shrink(val);
       if (shrinkIndex < shrinks.size()) {
         T t = shrinks.get(shrinkIndex);
-        generated.put(getName(), t);
-        return t;
+        return Optional.of(t);
       } else {
-        lastShrinkExhausted = true;
-        generated.put(getName(), val);
-        return val;
+        lastShrinkExhausted.set(true);
+        return Optional.of(val);
       }
     }
-    generated.put(getName(), val);
-    return val;
+    return Optional.empty();
+  }
+
+  private <T> void saveNamedVar(T t) {
+    if (varName != null) {
+      generated.add(Pair.of(varName, t));
+    }
   }
 
   public Integer anyInteger() {
-    return gen(new BoundedInt(Integer.MIN_VALUE, Integer.MAX_VALUE));
+    return generate(new BoundedInt(Integer.MIN_VALUE, Integer.MAX_VALUE));
   }
-
 
   public Integer anyPositiveInteger() {
     return boundedPositiveInteger(0, Integer.MAX_VALUE);
   }
 
   public Integer boundedPositiveInteger(int startInclusive, int endExclusive) {
-    return gen(new BoundedInt(startInclusive, endExclusive - 1));
+    return generate(new BoundedInt(startInclusive, endExclusive - 1));
   }
 
-  public Integer positiveIntegerGreaterThan(int startExclusive) {
+  public Integer anyIntegerGreaterThan(int startExclusive) {
     return boundedPositiveInteger(startExclusive + 1, Integer.MAX_VALUE);
   }
 
-  public Integer positiveIntegerLessThan(int endExclusive) {
+  public Integer anyPositiveIntegerLessThan(int endExclusive) {
     return boundedPositiveInteger(0, endExclusive);
   }
 
+  public Integer anyIntegerLessThan(int endExclusive) {
+    return boundedPositiveInteger(Integer.MIN_VALUE, endExclusive);
+  }
+
   public byte[] anyByteArrayOfLength(int length) {
-    Arbitrary<Byte> arbitraryByte = new BoundedInt(Byte.MIN_VALUE, Byte.MAX_VALUE).map(b -> b.byteValue(), i -> i.intValue());
-    ListOf<Byte> arbitraryList = new ListOf<>(arbitraryByte, length);
-    List<Byte> gen = gen(arbitraryList);
-    byte[] b = new byte[gen.size()];
-    for (int i = 0; i < gen.size(); i++) {
-      b[i] = gen.get(i);
-    }
-    return b;
+    return generate(new ArbitraryByteArray(length));
   }
 
   public byte[] anyByteArrayUpToLength(int length) {
-    return anyByteArrayOfLength(new BoundedInt(0, length).get(random));
+    return anyByteArrayOfLength(gen.anyPositiveIntegerLessThan(length));
   }
 
   public byte[] anyByteArray() {
-    return anyByteArrayUpToLength(255);
+    return anyByteArrayUpToLength(1024);
   }
 
   public <T, L extends List<T>> L shuffle(L l) {
     Collections.shuffle(l, random);
+    List<T> copy = Lists.newArrayList(l);
+    saveNamedVar(copy);
     return l;
   }
 
   public boolean anyBoolean() {
-    return random.nextBoolean();
+    return generate(new ArbitraryBoolean());
   }
 
   public boolean atRandom() {
@@ -139,17 +156,42 @@ public class Generative {
   }
 
   public String anyStringOfLength(int length) {
-    return RandomStringUtils.random(length, 0, 0, true, true, null, random);
+    return generate(new ArbitraryString(length));
   }
 
   public String anyStringOfLengthUpTo(int length) {
-    return anyStringOfLength(positiveIntegerLessThan(length + 1));
+    return anyStringOfLength(gen.anyPositiveIntegerLessThan(length + 1));
   }
 
   public String anyString() {
     return anyStringOfLengthUpTo(256);
   }
 
+  public <T> List<T> listOfLength(Arbitrary<T> items, int length) {
+    return generate(new ListOf<>(items, length));
+  }
+
+  public <T> List<T> listOfLengthUpTo(Arbitrary<T> items, int length) {
+    Integer trueLength = gen.anyPositiveIntegerLessThan(length + 1);
+    return listOfLength(items, trueLength);
+  }
+
+  public <T> List<T> listOf(Arbitrary<T> items) {
+    return listOfLengthUpTo(items, 1000);
+  }
+
+  public <T> Set<T> setOfSize(Arbitrary<T> items, int size) {
+    return generate(new SetOf<>(items, size));
+  }
+
+  public <T> Set<T> setOfSizeUpTo(Arbitrary<T> items, int length) {
+    Integer trueLength = gen.anyPositiveIntegerLessThan(length + 1);
+    return setOfSize(items, trueLength);
+  }
+
+  public <T> Set<T> setOf(Arbitrary<T> items) {
+    return setOfSizeUpTo(items, 1000);
+  }
 
   public static void runTests(int numTests, TestBlock block, String... additionalSeeds) {
     int i;
@@ -167,7 +209,7 @@ public class Generative {
       gen = new Generative(seed);
       block.run(testNumber, gen);
     } catch (Throwable e) {
-      Pair<String, Throwable> shrinkSeed = shrink(seed, testNumber, gen.index, block);
+      Pair<String, Throwable> shrinkSeed = shrink(seed, testNumber, gen.index.get(), block);
       if (shrinkSeed.getRight() != null) {
         throw new RuntimeException("Shrunken test case failed with seed: " + shrinkSeed.getLeft(),
             shrinkSeed.getRight());
@@ -239,7 +281,7 @@ public class Generative {
           shrinkTestNumber++;
           gen = new Generative(seed, shrinks);
           block.run(testNumber, gen);
-          shrinkExhausted = gen.lastShrinkExhausted;
+          shrinkExhausted = gen.lastShrinkExhausted.get();
           shrinks.set(shrinks.size() - 1, shrinks.get(shrinks.size() - 1) + 1);
         } catch (Throwable e) {
           lastException = e;
@@ -249,7 +291,7 @@ public class Generative {
     }
     LOG.info("Returning shrunken test case - performed " + (shrinkTestNumber - testNumber) + " shrinks");
     StringBuilder vars = new StringBuilder("Generated variables were: \n");
-    for (Map.Entry<String, Object> entry : gen.generated.entrySet()) {
+    for (Pair<String, Object> entry : gen.generated) {
       vars.append(entry.getKey() + " : " + entry.getValue() + "\n");
     }
     LOG.info(vars.toString());

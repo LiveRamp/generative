@@ -18,7 +18,7 @@ public class TestGenerative extends CommonJUnit4TestCase {
   @Test
   public void testShouldPass() {
     runTests(20, (testNumber, g) -> {
-      Integer theInt = g.positiveIntegerLessThan(50);
+      Integer theInt = g.anyPositiveIntegerLessThan(50);
       Integer shouldBeEven = theInt * 2;
       assertTrue(shouldBeEven % 2 == 0);
     });
@@ -26,29 +26,21 @@ public class TestGenerative extends CommonJUnit4TestCase {
 
   @Test
   public void testAlwaysFails() {
-    try {
-      runTests(10, (testNumber, g) -> {
-        Integer theInt = g.positiveIntegerLessThan(50);
-        Integer shouldBeEven = theInt * 2;
-        assertTrue(shouldBeEven % 2 == 1);
+      runTests(100, (testNumber, g) -> {
+        Integer theInt = g.namedVar("The Number").anyPositiveIntegerLessThan(50);
+        Integer whatWeMultipliedBy = g.namedVar("What we multiplied by").boundedPositiveInteger(2, 4);
+        Integer shouldBeEven = theInt * whatWeMultipliedBy;
+        assertTrue(shouldBeEven % 2 == 0);
       });
-      throw new RuntimeException("Should have failed");
-    } catch (Exception e) {
-      //expected
-    }
 
   }
 
   @Test
   public void testFailsForSomeInputs() {
-    try {
       runTests(20, (testNumber, g) -> {
         byte[] data = g.namedVar("The Data").anyByteArrayUpToLength(16);
         assertTrue(data.length < 8);
       });
       throw new RuntimeException("Should have failed");
-    } catch (Exception e) {
-      //expected
-    }
   }
 }

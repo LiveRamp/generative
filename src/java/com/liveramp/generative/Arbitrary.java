@@ -8,9 +8,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
+import org.jetbrains.annotations.NotNull;
 
 public interface Arbitrary<T> {
 
+  @NotNull
   T get(Random r);
 
   default List<T> shrink(T val) {

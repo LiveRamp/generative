@@ -22,12 +22,15 @@ public class BoundedInt implements Arbitrary<Integer> {
     if (upperBoundInclusive == lowerBoundInclusive) {
       return upperBoundInclusive;
     } else {
-      return r.nextInt(upperBoundInclusive - lowerBoundInclusive) + lowerBoundInclusive;
+      return r.nextInt((upperBoundInclusive+1) - lowerBoundInclusive) + lowerBoundInclusive;
     }
   }
 
   @Override
   public List<Integer> shrink(Integer val) {
-    return Lists.newArrayList(Math.max(lowerBoundInclusive, 0), lowerBoundInclusive, upperBoundInclusive);
+    return Lists.newArrayList(
+        Math.max(lowerBoundInclusive, 0),
+        lowerBoundInclusive,
+        upperBoundInclusive);
   }
 }
