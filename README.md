@@ -60,7 +60,7 @@ Multiple : 3
 
 java.lang.RuntimeException: Shrunken test case failed with seed: 1207756009:1f8b080000000000000033d2310200c2d2482903000000
 ```
-These seeds can be passed as additional arguments to runTests to ensure that once you've fixed a specific example, that specific example does not regress.
+These seeds can be passed as additional arguments to `runTests` to ensure that once you've fixed a specific example, that specific example does not regress.
 
 #### Shrinking
 
