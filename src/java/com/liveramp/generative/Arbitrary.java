@@ -47,4 +47,27 @@ public interface Arbitrary<T> {
     };
   }
 
+  default <R> Arbitrary<R> flatMap(Function<T, Arbitrary<R>> fn, Function<R, T> reverse) {
+    Arbitrary<T> arb = this;
+    return new Arbitrary<R>() {
+      @Override
+      public R get(Random r) {
+        return fn.apply(arb.get(r)).get(r);
+      }
+
+      @Override
+      public List<R> shrink(R val) {
+        if (reverse != null) {
+          return fn.apply(reverse.apply(val)).shrink(val);
+        } else {
+          return Lists.newArrayList();
+        }
+      }
+    };
+  }
+
+  default <R> Arbitrary<R> flatMap(Function<T, Arbitrary<R>> fn) {
+    return flatMap(fn, null);
+  }
+
 }

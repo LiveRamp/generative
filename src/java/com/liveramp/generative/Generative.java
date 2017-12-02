@@ -105,7 +105,7 @@ public class Generative {
   }
 
   public Integer anyInteger() {
-    return generate(new BoundedInt(Integer.MIN_VALUE, Integer.MAX_VALUE));
+    return generate(new ArbitraryBoundedInt(Integer.MIN_VALUE, Integer.MAX_VALUE));
   }
 
   public Integer anyPositiveInteger() {
@@ -113,7 +113,7 @@ public class Generative {
   }
 
   public Integer boundedPositiveInteger(int startInclusive, int endExclusive) {
-    return generate(new BoundedInt(startInclusive, endExclusive - 1));
+    return generate(new ArbitraryBoundedInt(startInclusive, endExclusive - 1));
   }
 
   public Integer anyIntegerGreaterThan(int startExclusive) {
@@ -133,7 +133,7 @@ public class Generative {
   }
 
   public byte[] anyByteArrayUpToLength(int length) {
-    return anyByteArrayOfLength(gen.anyPositiveIntegerLessThan(length));
+    return anyByteArrayOfLength(gen.anyPositiveIntegerLessThan(length + 1));
   }
 
   public byte[] anyByteArray() {

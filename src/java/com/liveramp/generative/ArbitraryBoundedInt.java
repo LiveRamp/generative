@@ -5,13 +5,13 @@ import java.util.Random;
 
 import com.google.common.collect.Lists;
 
-public class BoundedInt implements Arbitrary<Integer> {
+public class ArbitraryBoundedInt implements Arbitrary<Integer> {
 
   int lowerBoundInclusive;
   int upperBoundInclusive;
 
 
-  public BoundedInt(int lowerBoundInclusive, int upperBoundInclusive) {
+  public ArbitraryBoundedInt(int lowerBoundInclusive, int upperBoundInclusive) {
     assert upperBoundInclusive >= lowerBoundInclusive;
     this.lowerBoundInclusive = lowerBoundInclusive;
     this.upperBoundInclusive = upperBoundInclusive;
