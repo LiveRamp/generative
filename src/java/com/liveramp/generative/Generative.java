@@ -36,7 +36,7 @@ public class Generative {
   private AtomicBoolean lastShrinkExhausted = new AtomicBoolean(false);
 
   //For printing nice names for generated variables
-  private List<Pair<String, Object>> generated = Lists.newArrayList();
+  private final List<Pair<String, Object>> generated;
   private String varName;
 
   //Used for generation of "helper" random values that don't need names
@@ -52,6 +52,7 @@ public class Generative {
     this.shrinkIndices = shrinkIndices;
     this.index = new AtomicInteger(0);
     this.gen = this;
+    this.generated = Lists.newArrayList();
   }
 
   //There's almost certainly a less dumb way to do this
@@ -64,6 +65,10 @@ public class Generative {
     this.varName = name;
     this.lastShrinkExhausted = g.lastShrinkExhausted;
     this.gen = g;
+  }
+
+  public Random getInternalRandom() {
+    return random;
   }
 
   public Generative namedVar(String name) {
@@ -109,23 +114,23 @@ public class Generative {
   }
 
   public Integer anyPositiveInteger() {
-    return boundedPositiveInteger(0, Integer.MAX_VALUE);
+    return anyBoundedInteger(0, Integer.MAX_VALUE);
   }
 
-  public Integer boundedPositiveInteger(int startInclusive, int endExclusive) {
+  public Integer anyBoundedInteger(int startInclusive, int endExclusive) {
     return generate(new ArbitraryBoundedInt(startInclusive, endExclusive - 1));
   }
 
   public Integer anyIntegerGreaterThan(int startExclusive) {
-    return boundedPositiveInteger(startExclusive + 1, Integer.MAX_VALUE);
+    return anyBoundedInteger(startExclusive + 1, Integer.MAX_VALUE);
   }
 
   public Integer anyPositiveIntegerLessThan(int endExclusive) {
-    return boundedPositiveInteger(0, endExclusive);
+    return anyBoundedInteger(0, endExclusive);
   }
 
   public Integer anyIntegerLessThan(int endExclusive) {
-    return boundedPositiveInteger(Integer.MIN_VALUE, endExclusive);
+    return anyBoundedInteger(Integer.MIN_VALUE, endExclusive);
   }
 
   public byte[] anyByteArrayOfLength(int length) {

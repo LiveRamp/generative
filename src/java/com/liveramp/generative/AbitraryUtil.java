@@ -26,6 +26,6 @@ public class AbitraryUtil {
   }
 
   private static <T> List<T> getIth(List<List<T>> shrinkElements, int i) {
-    return shrinkElements.stream().map(l -> l.get(Math.min(0, i))).collect(Collectors.toList());
+    return shrinkElements.stream().map(l -> l.get(Math.min(i, l.size() - 1))).collect(Collectors.toList());
   }
 }

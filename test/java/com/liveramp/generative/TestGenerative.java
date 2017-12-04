@@ -1,5 +1,7 @@
 package com.liveramp.generative;
 
+import java.util.List;
+
 import org.apache.log4j.Level;
 import org.junit.Test;
 
@@ -50,5 +52,33 @@ public class TestGenerative extends CommonJUnit4TestCase {
     } catch (Exception e) {
       //expected
     }
+  }
+
+  @Test
+  public void testBoundedIntegerIsBounded() {
+    runTests(1000, (testNumber, g) -> {
+      Integer bound1 = g.namedVar("bound1").anyInteger();
+      Integer bound2 = g.namedVar("bound2").anyInteger();
+      int lowerBound = Math.min(bound1, bound2);
+      int upperBound = Math.max(bound1, bound2);
+      Integer theNumber = g.namedVar("theNumber").anyBoundedInteger(lowerBound, upperBound);
+      assertTrue("Number should be between bounds", theNumber >= lowerBound && theNumber <= upperBound);
+    });
+  }
+
+  @Test
+  public void testShrunkenIntegerIsBounded() {
+    runTests(1000, (testNumber, g) -> {
+      Integer bound1 = g.namedVar("bound1").anyInteger();
+      Integer bound2 = g.namedVar("bound2").anyInteger();
+      int lowerBound = Math.min(bound1, bound2);
+      int upperBound = Math.max(bound1, bound2);
+      ArbitraryBoundedInt arb = new ArbitraryBoundedInt(lowerBound, upperBound);
+      Integer theNumber = arb.get(g.getInternalRandom());
+      List<Integer> shrinks = arb.shrink(theNumber);
+      for (Integer shrink : shrinks) {
+        assertTrue("Shrink should be between bounds: "+shrink, shrink >= lowerBound && shrink <= upperBound);
+      }
+    });
   }
 }

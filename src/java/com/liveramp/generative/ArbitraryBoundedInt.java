@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Random;
 
 import com.google.common.collect.Lists;
+import org.apache.commons.lang.math.RandomUtils;
 
 public class ArbitraryBoundedInt implements Arbitrary<Integer> {
 
@@ -22,14 +23,26 @@ public class ArbitraryBoundedInt implements Arbitrary<Integer> {
     if (upperBoundInclusive == lowerBoundInclusive) {
       return upperBoundInclusive;
     } else {
-      return r.nextInt((upperBoundInclusive+1) - lowerBoundInclusive) + lowerBoundInclusive;
+      int diff = upperBoundInclusive - lowerBoundInclusive;
+      if (diff > 0 && diff != Integer.MAX_VALUE) {
+        return r.nextInt(diff + 1) + lowerBoundInclusive;
+      } else {
+        //Only happens when bounds are very far apart, meaning randomly guessing to get between bounds has 50% chance of
+        // success
+        while (true) {
+          int value = r.nextInt();
+          if (value >= lowerBoundInclusive && value <= upperBoundInclusive) {
+            return value;
+          }
+        }
+      }
     }
   }
 
   @Override
   public List<Integer> shrink(Integer val) {
     return Lists.newArrayList(
-        Math.max(lowerBoundInclusive, 0),
+        Math.min(Math.max(lowerBoundInclusive, 0), upperBoundInclusive),
         lowerBoundInclusive,
         upperBoundInclusive);
   }
