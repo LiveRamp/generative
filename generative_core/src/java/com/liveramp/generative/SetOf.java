@@ -24,10 +24,7 @@ public class SetOf<T> implements Arbitrary<Set<T>> {
 
   @Override
   public List<Set<T>> shrink(Set<T> val) {
-    return AbitraryUtil.shrinkCollection(val, internal, l -> Sets.newHashSet(l));
+    return AbitraryUtil.shrinkCollection(val, internal, l -> Sets.newHashSet(l), length);
   }
 
-  private <K> List<T> getIth(List<List<T>> shrinkElements, int i) {
-    return shrinkElements.stream().map(l -> l.get(Math.min(0, i))).collect(Collectors.toList());
-  }
 }
