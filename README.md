@@ -104,16 +104,19 @@ to use your Arbitrary to generate random variables similar to the built in metho
 
 #### Map and flatMap
 
-An Arbitrary is _monad_, meaning it supports the special operation `flatMap` for transforming from one Arbitrary to another. Using the provided instances, you could make an Arbitrary that created byte[]s of many different sizes using the following construction:
+An Arbitrary is a _monad_, meaning it supports the special operation `flatMap` for transforming from one Arbitrary to another. Using the provided instances, you could make an Arbitrary that created byte[]s of many different sizes using the following construction:
 
 ```java
-Arbitrary<byte[]> randomlySizedByteArrays = new ArbitraryBoundedInteger(0,10).flatMap(randomSize -> new ArbitraryByteArray(randomSize))
+Arbitrary<byte[]> randomlySizedByteArrays = new ArbitraryBoundedInteger(0,10)
+  .flatMap(randomSize -> new ArbitraryByteArray(randomSize))
 ```
 
-The Arbitrary we've created here first uses the root ArbitraryBoundedInteger to generate some size for the random array, then uses that size to create an ArbitraryByteArray that will create an array of that size with random data. This is nifty, but it destroys the `shrink` method built in to `ArbitraryBoundedInteger` - we'd like this new Arbitrary to be able to shrink it's size using the same algorithm as the existing shrink. To do that, we provide a reverseing function:
+The Arbitrary we've created here first uses the root ArbitraryBoundedInteger to generate some size for the random array, then uses that size to create an ArbitraryByteArray that will create an array with random data. This is nifty, but it destroys the `shrink` method built in to `ArbitraryBoundedInteger` - we'd like this new Arbitrary to be able to shrink it's size using the same algorithm as the existing shrink. To do that, we provide a reversing function:
 
 ```java
-Arbitrary<byte[]> randomlySizedByteArrays = new ArbitraryBoundedInteger(0,10).flatMap(randomSize -> new ArbitraryByteArray(randomSize), aByteArray -> aByteArray.length)
+Arbitrary<byte[]> randomlySizedByteArrays = new ArbitraryBoundedInteger(0,10)
+  .flatMap(randomSize -> new ArbitraryByteArray(randomSize), 
+           aByteArray -> aByteArray.length)
 ```
 
 Supplying the reversal function means that `randomlySizedByteArrays` will know to shrink the size of the array, as well as simplifying it's contents.
