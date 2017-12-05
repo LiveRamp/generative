@@ -58,7 +58,9 @@ public interface Arbitrary<T> {
       @Override
       public List<R> shrink(R val) {
         if (reverse != null) {
-          return fn.apply(reverse.apply(val)).shrink(val);
+          T apply = reverse.apply(val);
+          List<T> shrink = arb.shrink(apply);
+          return shrink.stream().flatMap(t -> fn.apply(t).shrink(val).stream()).collect(Collectors.toList());
         } else {
           return Lists.newArrayList();
         }

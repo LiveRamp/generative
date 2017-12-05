@@ -4,12 +4,11 @@ import java.util.List;
 import java.util.Random;
 
 import com.google.common.collect.Lists;
-import org.apache.commons.lang.math.RandomUtils;
 
 public class ArbitraryBoundedInt implements Arbitrary<Integer> {
 
-  int lowerBoundInclusive;
-  int upperBoundInclusive;
+  private int lowerBoundInclusive;
+  private int upperBoundInclusive;
 
 
   public ArbitraryBoundedInt(int lowerBoundInclusive, int upperBoundInclusive) {
@@ -43,6 +42,8 @@ public class ArbitraryBoundedInt implements Arbitrary<Integer> {
   public List<Integer> shrink(Integer val) {
     return Lists.newArrayList(
         Math.min(Math.max(lowerBoundInclusive, 0), upperBoundInclusive),
+        Math.min(Math.max(lowerBoundInclusive, 1), upperBoundInclusive),
+        Math.min(Math.max(lowerBoundInclusive, -1), upperBoundInclusive),
         lowerBoundInclusive,
         upperBoundInclusive);
   }
