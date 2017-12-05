@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -196,6 +197,14 @@ public class Generative {
 
   public <T> Set<T> setOf(Arbitrary<T> items) {
     return setOfSizeUpTo(items, 1000);
+  }
+
+  public <T> T anyOf(T... options) {
+    return generate(new ElementOf<>(Lists.newArrayList(options)));
+  }
+
+  public <T> T anyOf(Collection<T> options) {
+    return generate(new ElementOf<>(options));
   }
 
   public static void runTests(int numTests, TestBlock block, String... additionalSeeds) {
