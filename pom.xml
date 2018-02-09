@@ -18,6 +18,7 @@
 
   <modules>
     <module>generative_core</module>
+    <module>generative_thrift</module>
   </modules>
 
   <repositories>
