@@ -210,30 +210,44 @@ public class Generative {
   public static void runTests(int numTests, TestBlock block, String... additionalSeeds) {
     int i;
     for (i = 0; i < numTests; i++) {
-      runTestWithSeed(new Random().nextInt(), i, block);
+      runTestWithSeed(new Random().nextInt(), i, block, true);
     }
     for (String specificSeed : additionalSeeds) {
       runTestWithSeed(specificSeed, i, block);
     }
   }
 
-  private static void runTestWithSeed(long seed, int testNumber, TestBlock block) {
+  public static void runTestsWithoutShrinking(int numTests, TestBlock block, String... additionalSeeds) {
+    int i;
+    for (i = 0; i < numTests; i++) {
+      runTestWithSeed(new Random().nextInt(), i, block, false);
+    }
+    for (String specificSeed : additionalSeeds) {
+      runTestWithSeed(specificSeed, i, block);
+    }
+  }
+
+  private static void runTestWithSeed(long seed, int testNumber, TestBlock block, boolean shouldShrink) {
     Generative gen = null;
     try {
       gen = new Generative(seed);
       block.run(testNumber, gen);
     } catch (Throwable e) {
-      Pair<String, Throwable> shrinkSeed = shrink(seed, testNumber, gen.index.get(), block);
-      if (shrinkSeed.getRight() != null) {
-        throw new RuntimeException("Shrunken test case failed with seed: " + shrinkSeed.getLeft(),
-            shrinkSeed.getRight());
+      if (!shouldShrink) {
+        throw new RuntimeException(e);
       } else {
-        throw new RuntimeException("Test case failed with seed: " + seed, e);
+        Pair<String, Throwable> shrinkSeed = shrink(seed, testNumber, gen.index.get(), block);
+        if (shrinkSeed.getRight() != null) {
+          throw new RuntimeException("Shrunken test case failed with seed: " + shrinkSeed.getLeft(),
+              shrinkSeed.getRight());
+        } else {
+          throw new RuntimeException("Test case failed with seed: " + seed, e);
+        }
       }
     }
   }
 
-  public static void runTestWithSeed(String seed, int testNumber, TestBlock block) {
+  private static void runTestWithSeed(String seed, int testNumber, TestBlock block) {
     try {
       Pair<Long, List<Integer>> seedVars = parseSeed(seed);
       block.run(testNumber, new Generative(seedVars.getLeft(), seedVars.getRight()));
