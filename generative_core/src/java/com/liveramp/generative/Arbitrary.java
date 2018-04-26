@@ -12,6 +12,10 @@ import org.jetbrains.annotations.NotNull;
 
 public interface Arbitrary<T> {
 
+  default Generator<T> gen(Generative2 gen) {
+    return new Generator<>(this, gen);
+  }
+
   @NotNull
   T get(Random r);
 
