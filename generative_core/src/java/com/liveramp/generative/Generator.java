@@ -18,7 +18,7 @@ public class Generator<T> implements Arbitrary<T> {
   }
 
   @Override
-  public Generator<T> gen(Function<Arbitrary<T>, T> newGeneratorFn) {
+  public Generator<T> gen(Generative2 gen) {
     return new Generator<>(internal, gen);
   }
 
