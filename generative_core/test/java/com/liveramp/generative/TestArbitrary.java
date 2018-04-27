@@ -20,7 +20,7 @@ public class TestArbitrary extends CommonJUnit4TestCase {
 
   @Test
   public void testFlatMapAndMap() {
-    Generative.runTests(100, (testNum, g) -> {
+    Generative2.runTests(100, (testNum, g) -> {
       ArbitraryBoundedInt arbitrarySize = new ArbitraryBoundedInt(0, 10);
 
       Arbitrary<byte[]> arbitraryByteArrayOfSize = arbitrarySize.flatMap(
@@ -33,7 +33,7 @@ public class TestArbitrary extends CommonJUnit4TestCase {
           s -> s.getBytes()
       );
 
-      List<String> strings = g.namedVar("The Strings").listOfLength(asString, 10000);
+      List<String> strings = g.namedVar("The Strings").listOfLength(asString, 10000).get();
 
       Set<Integer> collect = strings.stream().map(s -> s.length()).collect(Collectors.toSet());
       Assert.assertEquals("flatMap construction should generate strings of all 11 possible lengths",
