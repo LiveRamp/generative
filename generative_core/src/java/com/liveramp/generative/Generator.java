@@ -10,15 +10,15 @@ import org.jetbrains.annotations.NotNull;
 public class Generator<T> implements Arbitrary<T> {
 
   private final Arbitrary<T> internal;
-  private Generative2 gen;
+  private Generative gen;
 
-  public Generator(Arbitrary<T> internal, Generative2 gen) {
+  public Generator(Arbitrary<T> internal, Generative gen) {
     this.internal = internal;
     this.gen = gen;
   }
 
   @Override
-  public Generator<T> gen(Generative2 gen) {
+  public Generator<T> gen(Generative gen) {
     return new Generator<>(internal, gen);
   }
 

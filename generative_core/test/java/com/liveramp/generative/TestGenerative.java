@@ -8,13 +8,13 @@ import org.junit.Test;
 
 import com.rapleaf.java_support.CommonJUnit4TestCase;
 
-import static com.liveramp.generative.Generative2.*;
+import static com.liveramp.generative.Generative.*;
 import static org.junit.Assert.assertTrue;
 
-public class TestGenerative2 extends CommonJUnit4TestCase {
+public class TestGenerative extends CommonJUnit4TestCase {
 
 
-  public TestGenerative2() {
+  public TestGenerative() {
     super(Level.INFO);
   }
 

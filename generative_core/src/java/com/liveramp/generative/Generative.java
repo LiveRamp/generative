@@ -4,7 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -24,13 +23,10 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
-import org.mockito.cglib.proxy.Enhancer;
-import org.mockito.cglib.proxy.MethodInterceptor;
-import org.mockito.cglib.proxy.MethodProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Generative2 {
+public class Generative {
 
   private long seed = 0;
   private Random random;
@@ -45,13 +41,13 @@ public class Generative2 {
   private String varName;
 
   //Used for generation of "helper" random values that don't need names
-  private Generative2 gen;
+  private Generative gen;
 
-  public Generative2(long seed) {
+  public Generative(long seed) {
     this(seed, Lists.newArrayList());
   }
 
-  public Generative2(long seed, List<Integer> shrinkIndices) {
+  public Generative(long seed, List<Integer> shrinkIndices) {
     this.seed = seed;
     this.random = new Random(seed);
     this.shrinkIndices = shrinkIndices;
@@ -61,7 +57,7 @@ public class Generative2 {
   }
 
   //There's almost certainly a less dumb way to do this
-  public Generative2(Generative2 g, String name) {
+  public Generative(Generative g, String name) {
     this.seed = g.seed;
     this.random = g.random;
     this.shrinkIndices = g.shrinkIndices;
@@ -76,8 +72,8 @@ public class Generative2 {
     return random;
   }
 
-  public Generative2 namedVar(String name) {
-    return new Generative2(this, name);
+  public Generative namedVar(String name) {
+    return new Generative(this, name);
   }
 
   public <T> T generate(Arbitrary<T> arbitrary) {
@@ -215,7 +211,7 @@ public class Generative2 {
     return new ElementOf<>(options).gen(this);
   }
 
-  public static void runTests(int numTests, TestBlock2 block, String... additionalSeeds) {
+  public static void runTests(int numTests, TestBlock block, String... additionalSeeds) {
     int i;
     for (i = 0; i < numTests; i++) {
       runTestWithSeed(new Random().nextInt(), i, block, true);
@@ -225,7 +221,7 @@ public class Generative2 {
     }
   }
 
-  public static void runTestsWithoutShrinking(int numTests, TestBlock2 block, String... additionalSeeds) {
+  public static void runTestsWithoutShrinking(int numTests, TestBlock block, String... additionalSeeds) {
     int i;
     for (i = 0; i < numTests; i++) {
       runTestWithSeed(new Random().nextInt(), i, block, false);
@@ -235,10 +231,10 @@ public class Generative2 {
     }
   }
 
-  private static void runTestWithSeed(long seed, int testNumber, TestBlock2 block, boolean shouldShrink) {
-    Generative2 gen = null;
+  private static void runTestWithSeed(long seed, int testNumber, TestBlock block, boolean shouldShrink) {
+    Generative gen = null;
     try {
-      gen = new Generative2(seed);
+      gen = new Generative(seed);
       block.run(testNumber, gen);
     } catch (Throwable e) {
       if (!shouldShrink) {
@@ -255,10 +251,10 @@ public class Generative2 {
     }
   }
 
-  private static void runTestWithSeed(String seed, int testNumber, TestBlock2 block) {
+  private static void runTestWithSeed(String seed, int testNumber, TestBlock block) {
     try {
       Pair<Long, List<Integer>> seedVars = parseSeed(seed);
-      block.run(testNumber, new Generative2(seedVars.getLeft(), seedVars.getRight()));
+      block.run(testNumber, new Generative(seedVars.getLeft(), seedVars.getRight()));
     } catch (Exception e) {
       throw new RuntimeException("Error during test while using seed: " + seed, e);
     }
@@ -301,13 +297,13 @@ public class Generative2 {
     }
   }
 
-  private static Logger LOG = LoggerFactory.getLogger(Generative2.class);
+  private static Logger LOG = LoggerFactory.getLogger(Generative.class);
 
-  private static Pair<String, Throwable> shrink(long seed, int testNumber, int variableCount, TestBlock2 block) {
+  private static Pair<String, Throwable> shrink(long seed, int testNumber, int variableCount, TestBlock block) {
     int shrinkTestNumber = testNumber;
     List<Integer> shrinks = Lists.newArrayList();
     Throwable lastException = null;
-    Generative2 gen = null;
+    Generative gen = null;
     while (shrinks.size() < variableCount) {
       shrinks.add(0);
       boolean testPassed = true;
@@ -315,7 +311,7 @@ public class Generative2 {
       while (testPassed && !shrinkExhausted) {
         try {
           shrinkTestNumber++;
-          gen = new Generative2(seed, shrinks);
+          gen = new Generative(seed, shrinks);
           block.run(testNumber, gen);
           shrinkExhausted = gen.lastShrinkExhausted.get();
           shrinks.set(shrinks.size() - 1, shrinks.get(shrinks.size() - 1) + 1);

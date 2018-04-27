@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface Arbitrary<T> {
 
-  default Generator<T> gen(Generative2 gen) {
+  default Generator<T> gen(Generative gen) {
     return new Generator<>(this, gen);
   }
 

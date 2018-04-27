@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javafx.util.Pair;
 import org.apache.log4j.Level;
 import org.junit.Assert;
 import org.junit.Test;
@@ -20,7 +19,7 @@ public class TestArbitrary extends CommonJUnit4TestCase {
 
   @Test
   public void testFlatMapAndMap() {
-    Generative2.runTests(100, (testNum, g) -> {
+    Generative.runTests(100, (testNum, g) -> {
       ArbitraryBoundedInt arbitrarySize = new ArbitraryBoundedInt(0, 10);
 
       Arbitrary<byte[]> arbitraryByteArrayOfSize = arbitrarySize.flatMap(
