@@ -42,6 +42,11 @@ public class Generator<T> implements Arbitrary<T> {
     return internal.stream(r);
   }
 
+  public Stream<T> stream() {
+    return Stream.generate(() -> get());
+  }
+
+
   @Override
   public <R> Generator<R> map(Function<T, R> fn) {
     return new Generator<>(internal.map(fn), gen);
