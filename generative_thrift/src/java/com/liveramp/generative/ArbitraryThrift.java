@@ -6,10 +6,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
@@ -127,12 +127,9 @@ public class ArbitraryThrift<T extends TBase> implements Arbitrary<T> {
       }
 
       for (Map.Entry<? extends TFieldIdEnum, FieldMetaData> entry : entries) {
-        if (fieldArbitraries.containsKey(entry.getKey())) {
-          t.setFieldValue(entry.getKey(), fieldArbitraries.get(entry.getKey()).get(r));
-        } else if (defaultTypeArbitraries.containsKey(entry.getValue().valueMetaData.type)) {
-          DefaultValueCreator<?> valueCreator = defaultTypeArbitraries.get(entry.getValue().valueMetaData.type);
-          Arbitrary<?> arbitrary = valueCreator.apply(defaultTypeArbitraries, entry.getValue().valueMetaData);
-          t.setFieldValue(entry.getKey(), arbitrary.get(r));
+        Optional<Arbitrary> maybeArbitrary = getArbitrary(entry);
+        if (maybeArbitrary.isPresent()) {
+          t.setFieldValue(entry.getKey(), maybeArbitrary.get().get(r));
         }
       }
       if (!(t instanceof TUnion)) {
@@ -165,20 +162,33 @@ public class ArbitraryThrift<T extends TBase> implements Arbitrary<T> {
     T shrinkCopy = (T)val.deepCopy();
     Map<? extends TFieldIdEnum, FieldMetaData> metadata = getFieldMetaDataMap();
     for (Map.Entry<? extends TFieldIdEnum, FieldMetaData> entry : metadata.entrySet()) {
-      if (defaultTypeArbitraries.containsKey(entry.getValue().valueMetaData.type) && shrinkCopy.isSet(entry.getKey())) {
-        DefaultValueCreator<?> valueCreator = defaultTypeArbitraries.get(entry.getValue().valueMetaData.type);
-        Arbitrary arb = valueCreator.apply(defaultTypeArbitraries, entry.getValue().valueMetaData);
+      Optional<Arbitrary> maybeArbitrary = getArbitrary(entry);
+      if (maybeArbitrary.isPresent() && shrinkCopy.isSet(entry.getKey())) {
         Object currentValue = shrinkCopy.getFieldValue(entry.getKey());
         if (currentValue instanceof byte[]) {
           currentValue = ByteBuffer.wrap((byte[])currentValue);
         }
-        List shrink = arb.shrink(currentValue);
+        List shrink = maybeArbitrary.get().shrink(currentValue);
         if (!shrink.isEmpty()) {
           shrinkCopy.setFieldValue(entry.getKey(), shrink.get(0));
         }
       }
     }
     return shrinkCopy;
+  }
+
+
+  private Optional<Arbitrary> getArbitrary(Map.Entry<? extends TFieldIdEnum, FieldMetaData> entry) {
+    byte type = entry.getValue().valueMetaData.type;
+    TFieldIdEnum key = entry.getKey();
+    if (fieldArbitraries.containsKey(key)) {
+      return Optional.of(fieldArbitraries.get(key));
+    } else if (defaultTypeArbitraries.containsKey(type)) {
+      DefaultValueCreator<?> valueCreator = defaultTypeArbitraries.get(type);
+      return Optional.of(valueCreator.apply(defaultTypeArbitraries, entry.getValue().valueMetaData));
+    } else {
+      return Optional.empty();
+    }
   }
 
   private T unsetAllOptionalFields(T val) throws IllegalAccessException, NoSuchFieldException {
