@@ -157,6 +157,15 @@ public class Generative {
     return new ArbitraryBoolean().gen(this);
   }
 
+  public Generator<Boolean> anyWeightedBoolean(double probabilityTrue) {
+    return anyDoubleFrom0To1().map(d -> d < probabilityTrue);
+  }
+
+  public Generator<Double> anyDoubleFrom0To1() {
+    return ((Arbitrary<Double>)r -> r.nextDouble()).gen(this);
+  }
+
+
   public Generator<Boolean> atRandom() {
     return anyBoolean();
   }
