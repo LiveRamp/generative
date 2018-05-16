@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>generative</artifactId>
-  <version>1.1-SNAPSHOT</version>
+  <version>${snapshot.version.number}-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <parent>
@@ -20,6 +20,7 @@
 
   <properties>
     <skip.db.init>true</skip.db.init>
+    <snapshot.version.number>1.1</snapshot.version.number>
   </properties>
 
 
