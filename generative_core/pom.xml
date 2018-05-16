@@ -8,7 +8,7 @@
   <parent>
     <groupId>com.liveramp</groupId>
     <artifactId>generative</artifactId>
-    <version>${snapshot.version.number}-SNAPSHOT</version>
+    <version>1.1-SNAPSHOT</version>
   </parent>
 
   <properties>
