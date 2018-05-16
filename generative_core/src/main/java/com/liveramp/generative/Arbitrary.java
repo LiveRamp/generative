@@ -1,6 +1,7 @@
 package com.liveramp.generative;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -73,4 +74,9 @@ public interface Arbitrary<T> {
     return flatMap(fn, null);
   }
 
+  public static <R> Arbitrary<R> join(Arbitrary<Arbitrary<R>> arb) {
+    return arb.flatMap(
+        Function.identity(),
+        Fixed::new);
+  }
 }
