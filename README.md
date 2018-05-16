@@ -1,5 +1,6 @@
 # Generative - A simple generative test library for Java
 
+https://travis-ci.com/LiveRamp/generative.svg?branch=master
 
 Generative and property based testing is getting increasing attention in functional programming circles as a way to test important aspects of code with minimal effort. After a very brief survey, the options in Java didn't feel like they met my needs - the primary option appears to be features of JUnit, which are all implemented using Annotations and feel non-intuitive to me. Given this, I decided to make my own.
 
