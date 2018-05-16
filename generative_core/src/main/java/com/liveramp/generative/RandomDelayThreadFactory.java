@@ -1,5 +1,6 @@
 package com.liveramp.generative;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -7,9 +8,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-
-import com.google.common.collect.Lists;
-import org.jetbrains.annotations.NotNull;
 
 public class RandomDelayThreadFactory implements ThreadFactory {
 
@@ -28,13 +26,13 @@ public class RandomDelayThreadFactory implements ThreadFactory {
       Generator<Integer> delayLength,
       TimeUnit delayLengthUnit,
       ThreadFactory internal) {
-    this.producedThreads = Collections.synchronizedList(Lists.newArrayList());
+    this.producedThreads = Collections.synchronizedList(new ArrayList<>());
     this.delayInterval = delayInterval;
     this.delayIntervalUnit = delayIntervalUnit;
     this.delayLength = delayLength;
     this.delayLengthUnit = delayLengthUnit;
     this.internal = internal;
-    this.chaosMonkeyThreads = Lists.newArrayList();
+    this.chaosMonkeyThreads = new ArrayList<>();
     int count = 0;
     for (int i = 0; i < delayThreads; i++) {
       Thread chaosMonkeyThread = new Thread(new ChaosMonkey());
@@ -47,7 +45,7 @@ public class RandomDelayThreadFactory implements ThreadFactory {
   }
 
   @Override
-  public Thread newThread(@NotNull Runnable r) {
+  public Thread newThread(Runnable r) {
     Thread thread = internal.newThread(r);
     producedThreads.add(thread);
     return thread;

@@ -4,21 +4,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
-import org.apache.log4j.Level;
 import org.junit.Test;
 
-import com.liveramp.java_support.functional.Fn;
-import com.rapleaf.java_support.CommonJUnit4TestCase;
 
 import static com.liveramp.generative.Generative.*;
 import static org.junit.Assert.assertTrue;
 
-public class TestGenerative extends CommonJUnit4TestCase {
+public class TestGenerative {
 
-
-  public TestGenerative() {
-    super(Level.INFO);
-  }
 
   @Test
   public void testShouldPass() {
@@ -26,12 +19,6 @@ public class TestGenerative extends CommonJUnit4TestCase {
       Integer theInt = g.anyPositiveIntegerLessThan(50).get();
       Integer shouldBeEven = theInt * 2;
       assertTrue(shouldBeEven % 2 == 0);
-      String[] s = new String[0];
-
-      final int length = s.length;
-      Fn<Void,Integer> f = (n) -> {
-        return length;
-      };
     });
   }
 

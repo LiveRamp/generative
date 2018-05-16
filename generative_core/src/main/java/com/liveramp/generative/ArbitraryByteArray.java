@@ -1,11 +1,10 @@
 package com.liveramp.generative;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-
-import com.google.common.collect.Lists;
-import org.jetbrains.annotations.NotNull;
 
 public class ArbitraryByteArray implements Arbitrary<byte[]> {
 
@@ -23,12 +22,14 @@ public class ArbitraryByteArray implements Arbitrary<byte[]> {
 
   @Override
   public List<byte[]> shrink(byte[] val) {
-    return Lists.newArrayList(
+    List<byte[]> result = new ArrayList<>();
+    Collections.addAll(result,
         makeArrayOf(0),
         makeArrayOf(1),
         makeArrayOf(Byte.MIN_VALUE),
         makeArrayOf(Byte.MAX_VALUE)
     );
+    return result;
   }
 
   private byte[] makeArrayOf(int i) {

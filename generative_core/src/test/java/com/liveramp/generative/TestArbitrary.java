@@ -4,18 +4,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.log4j.Level;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.rapleaf.java_support.CommonJUnit4TestCase;
 
-public class TestArbitrary extends CommonJUnit4TestCase {
-
-  public TestArbitrary() {
-    super(Level.INFO);
-  }
-
+public class TestArbitrary  {
 
   @Test
   public void testFlatMapAndMap() {

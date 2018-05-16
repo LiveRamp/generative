@@ -4,16 +4,16 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TFieldIdEnum;
 import org.apache.thrift.TFieldRequirementType;
@@ -24,9 +24,6 @@ import org.apache.thrift.meta_data.ListMetaData;
 import org.apache.thrift.meta_data.SetMetaData;
 import org.apache.thrift.meta_data.StructMetaData;
 import org.apache.thrift.protocol.TType;
-import org.jetbrains.annotations.NotNull;
-
-import com.liveramp.commons.collections.map.MapBuilder;
 
 public class ArbitraryThrift<T extends TBase> implements Arbitrary<T> {
 
@@ -36,24 +33,24 @@ public class ArbitraryThrift<T extends TBase> implements Arbitrary<T> {
   private final Map<TFieldIdEnum, Arbitrary<?>> fieldArbitraries;
 
   public ArbitraryThrift(Class<T> clazz) {
-    this(clazz, Maps.newHashMap());
+    this(clazz, new HashMap<>());
   }
 
   public ArbitraryThrift(Class<T> clazz,
                          Map<TFieldIdEnum, Arbitrary<?>> fieldArbitraries) {
     this.clazz = clazz;
-    this.defaultTypeArbitraries = MapBuilder.<Byte, DefaultValueCreator>of(
-        TType.BOOL, boolPrim)
-        .put(TType.BYTE, bytePrim)
-        .put(TType.I16, shortPrim)
-        .put(TType.I32, intPrim)
-        .put(TType.DOUBLE, doublePrim)
-        .put(TType.STRING, stringPrim)
-        .put(TType.I64, longPrim)
-        .put(TType.SET, setPrim)
-        .put(TType.STRUCT, structPrim)
-        .get();
-    this.fieldArbitraries = Maps.newTreeMap(new FieldIdComparator());
+    this.defaultTypeArbitraries = new HashMap<>();
+
+    this.defaultTypeArbitraries.put(TType.BOOL, boolPrim);
+    this.defaultTypeArbitraries.put(TType.BYTE, bytePrim);
+    this.defaultTypeArbitraries.put(TType.I16, shortPrim);
+    this.defaultTypeArbitraries.put(TType.I32, intPrim);
+    this.defaultTypeArbitraries.put(TType.DOUBLE, doublePrim);
+    this.defaultTypeArbitraries.put(TType.STRING, stringPrim);
+    this.defaultTypeArbitraries.put(TType.I64, longPrim);
+    this.defaultTypeArbitraries.put(TType.SET, setPrim);
+    this.defaultTypeArbitraries.put(TType.STRUCT, structPrim);
+    this.fieldArbitraries = new TreeMap<>(new FieldIdComparator());
     this.fieldArbitraries.putAll(fieldArbitraries);
   }
 
@@ -87,16 +84,13 @@ public class ArbitraryThrift<T extends TBase> implements Arbitrary<T> {
       };
 
   public static final DefaultValueCreator structPrim =
-      (m, fv) -> new ArbitraryThrift(((StructMetaData)fv).structClass, Maps.newHashMap());
+      (m, fv) -> new ArbitraryThrift(((StructMetaData)fv).structClass, new HashMap<>());
   public static final DefaultValueCreator<Set> setPrim =
       (m, fv) -> {
         SetMetaData setMetaData = (SetMetaData)fv;
         DefaultValueCreator<?> constructor = m.get(setMetaData.elemMetaData.type);
         Arbitrary<?> elems = constructor.apply(m, setMetaData.elemMetaData);
-        return new ArbitraryBoundedInt(0, 128).<Set>flatMap(
-            l -> new SetOf(elems, l),
-            s -> s.size()
-        );
+        return new SetOf(elems, new ArbitraryBoundedInt(0, 128));
       };
 
   public static final DefaultValueCreator<List> listPrim =
@@ -104,13 +98,9 @@ public class ArbitraryThrift<T extends TBase> implements Arbitrary<T> {
         ListMetaData listMetaData = (ListMetaData)fv;
         DefaultValueCreator<?> constructor = m.get(listMetaData.elemMetaData.type);
         Arbitrary<?> elems = constructor.apply(m, listMetaData.elemMetaData);
-        return new ArbitraryBoundedInt(0, 128).<List>flatMap(
-            l -> new ListOf(elems, l),
-            s -> s.size()
-        );
+        return new ListOf(elems, new ArbitraryBoundedInt(0, 128));
       };
 
-  @NotNull
   @Override
   public T get(Random r) {
     try {
@@ -121,7 +111,7 @@ public class ArbitraryThrift<T extends TBase> implements Arbitrary<T> {
       Set<? extends Map.Entry<? extends TFieldIdEnum, FieldMetaData>> entries = metadata.entrySet();
 
       if (t instanceof TUnion) {
-        ArrayList<? extends Map.Entry<? extends TFieldIdEnum, FieldMetaData>> entryList = Lists.newArrayList(entries);
+        ArrayList<? extends Map.Entry<? extends TFieldIdEnum, FieldMetaData>> entryList = new ArrayList<>(entries);
         Collections.shuffle(entryList, r);
         entries = entryList.stream().limit(1).collect(Collectors.toSet());
       }
@@ -152,7 +142,9 @@ public class ArbitraryThrift<T extends TBase> implements Arbitrary<T> {
       T shrinkAllFields = shrinkAllFields(val);
       T shrinkAllFieldsAndNoOptionals = unsetAllOptionalFields(shrinkAllFields);
 
-      return Lists.newArrayList(shrinkAllFieldsAndNoOptionals, shrinkAllFields, noOptionals);
+      List<T> result = new ArrayList<>();
+      Collections.addAll(result, shrinkAllFieldsAndNoOptionals, shrinkAllFields, noOptionals);
+      return result;
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

@@ -1,5 +1,6 @@
 package com.liveramp.generative;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -7,20 +8,16 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.collect.Lists;
-import org.jetbrains.annotations.NotNull;
-
 public interface Arbitrary<T> {
 
   default Generator<T> gen(Generative gen) {
     return new Generator<>(this, gen);
   }
 
-  @NotNull
   T get(Random r);
 
   default List<T> shrink(T val) {
-    return Collections.emptyList();
+    return new ArrayList<>();
   }
 
   default Stream<T> stream(Random r) {
@@ -45,7 +42,7 @@ public interface Arbitrary<T> {
           return arb.shrink(reverse.apply(val)).stream()
               .map(fn).collect(Collectors.toList());
         } else {
-          return Lists.newArrayList();
+          return new ArrayList<>();
         }
       }
     };
@@ -66,7 +63,7 @@ public interface Arbitrary<T> {
           List<T> shrink = arb.shrink(apply);
           return shrink.stream().flatMap(t -> fn.apply(t).shrink(val).stream()).collect(Collectors.toList());
         } else {
-          return Lists.newArrayList();
+          return new ArrayList<>();
         }
       }
     };

@@ -5,8 +5,6 @@ import java.util.Random;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import org.jetbrains.annotations.NotNull;
-
 public class Generator<T> implements Arbitrary<T> {
 
   private final Arbitrary<T> internal;
@@ -27,7 +25,6 @@ public class Generator<T> implements Arbitrary<T> {
   }
 
   @Override
-  @NotNull
   public T get(Random r) {
     return internal.get(r);
   }

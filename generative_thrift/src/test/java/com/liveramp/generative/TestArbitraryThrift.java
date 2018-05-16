@@ -1,52 +1,40 @@
 package com.liveramp.generative;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
-import com.google.common.collect.Maps;
-import org.apache.log4j.Level;
 import org.apache.thrift.TFieldIdEnum;
+import org.junit.Assert;
 import org.junit.Test;
 
-import com.liveramp.audience.generated.AudienceMember;
-import com.liveramp.commons.collections.map.MapBuilder;
-import com.liveramp.types.anonymous_records.AnonymousRecord;
-import com.rapleaf.java_support.CommonJUnit4TestCase;
-import com.rapleaf.types.new_person_data.LRCField;
-import com.rapleaf.types.new_person_data.LongSet;
-
-
-public class TestArbitraryThrift extends CommonJUnit4TestCase {
-
-
-  public TestArbitraryThrift() {
-    super(Level.INFO);
-  }
+public class TestArbitraryThrift {
 
   @Test
   public void testSimpleSpecifiedFields() {
+    Map<TFieldIdEnum, Arbitrary<?>> fieldArbitraries = new HashMap<>();
+    fieldArbitraries.put(LongSet._Fields.LONGS,
+        new SetOf<>(new ArbitraryBoundedInt(0, 9).map(i -> i.longValue()), 1000));
 
-    ArbitraryThrift<LongSet> arb = new ArbitraryThrift<>(LongSet.class,
-        MapBuilder.<TFieldIdEnum, Arbitrary<?>>of(LongSet._Fields.LONGS,
-            new SetOf<>(new ArbitraryBoundedInt(0, 10).map(i -> i.longValue()), 10))
-            .get());
+    ArbitraryThrift<LongSet> arb = new ArbitraryThrift<>(LongSet.class, fieldArbitraries);
 
-    arb.get(new Random());
-  }
+    Random r = new Random();
+    LongSet result = arb.get(r);
 
-  @Test
-  public void testDefaultFields() {
-    ArbitraryThrift<LRCField> arbField = new ArbitraryThrift<>(LRCField.class);
-    arbField.get(new Random());
-    ArbitraryThrift<AnonymousRecord> arbField2 = new ArbitraryThrift<>(AnonymousRecord.class);
-    arbField2.get(new Random());
+    //Adding 1000 random values should give us all 10 unique possible values
+    Assert.assertEquals(10, result.get_longs_size());
   }
 
   @Test
   public void testShrink() {
-    ArbitraryThrift<AnonymousRecord> arb = new ArbitraryThrift<>(AnonymousRecord.class);
-    AnonymousRecord x = arb.get(new Random());
-    arb.shrink(x);
+    ArbitraryThrift<LongSet> arb = new ArbitraryThrift<>(LongSet.class);
+    LongSet x = arb.get(new Random());
+    List<LongSet> shrunk = arb.shrink(x);
+    //current code always produces 3 possibilities
+    Assert.assertEquals(3, shrunk.size());
+    //first possibilities should be drastic things like removing all elements
+    Assert.assertEquals(0, shrunk.get(0).get_longs_size());
   }
 
 }

@@ -1,9 +1,9 @@
 package com.liveramp.generative;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-
-import com.google.common.collect.Lists;
 
 public class ArbitraryBoundedInt implements Arbitrary<Integer> {
 
@@ -40,11 +40,13 @@ public class ArbitraryBoundedInt implements Arbitrary<Integer> {
 
   @Override
   public List<Integer> shrink(Integer val) {
-    return Lists.newArrayList(
+    List<Integer> result = new ArrayList<>();
+    Collections.addAll(result,
         Math.min(Math.max(lowerBoundInclusive, 0), upperBoundInclusive),
         Math.min(Math.max(lowerBoundInclusive, 1), upperBoundInclusive),
         Math.min(Math.max(lowerBoundInclusive, -1), upperBoundInclusive),
         lowerBoundInclusive,
         upperBoundInclusive);
+    return result;
   }
 }

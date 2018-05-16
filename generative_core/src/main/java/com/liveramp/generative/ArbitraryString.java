@@ -1,9 +1,10 @@
 package com.liveramp.generative;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import com.google.common.collect.Lists;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -22,9 +23,11 @@ public class ArbitraryString implements Arbitrary<String> {
 
   @Override
   public List<String> shrink(String val) {
-    return Lists.newArrayList(
+    List<String> result = new ArrayList<>();
+    Collections.addAll(result,
         StringUtils.repeat("0", length),
         StringUtils.repeat("a", length),
         StringUtils.repeat("A", length));
+    return result;
   }
 }

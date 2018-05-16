@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -16,13 +17,11 @@ import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import com.google.common.collect.Lists;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +43,7 @@ public class Generative {
   private Generative gen;
 
   public Generative(long seed) {
-    this(seed, Lists.newArrayList());
+    this(seed, new ArrayList<>());
   }
 
   public Generative(long seed, List<Integer> shrinkIndices) {
@@ -53,7 +52,7 @@ public class Generative {
     this.shrinkIndices = shrinkIndices;
     this.index = new AtomicInteger(0);
     this.gen = this;
-    this.generated = Lists.newArrayList();
+    this.generated = new ArrayList<>();
   }
 
   //There's almost certainly a less dumb way to do this
@@ -88,7 +87,6 @@ public class Generative {
     return returnVal;
   }
 
-  @NotNull
   private <T> Optional<T> attemptShrink(Arbitrary<T> arbitrary, T val, int currentIndex) {
     if (currentIndex < shrinkIndices.size() && shrinkIndices.get(currentIndex) >= 0) {
       Integer shrinkIndex = shrinkIndices.get(currentIndex);
@@ -148,7 +146,7 @@ public class Generative {
 
   public <T, L extends List<T>> L shuffle(L l) {
     Collections.shuffle(l, random);
-    List<T> copy = Lists.newArrayList(l);
+    List<T> copy = new ArrayList<>(l);
     saveNamedVar(copy);
     return l;
   }
@@ -183,11 +181,11 @@ public class Generative {
   }
 
   public <T> Generator<List<T>> listOfLength(Arbitrary<T> items, int length) {
-    return new ListOf<>(items, length).gen(this);
+    return new ListOf<>(items, new Fixed<>(length)).gen(this);
   }
 
   public <T> Generator<List<T>> listOfLength(Arbitrary<T> items, Arbitrary<Integer> length) {
-    return new ListOf<>(items, length.gen(this).get()).gen(this);
+    return new ListOf<>(items, length).gen(this);
   }
 
   public <T> Generator<List<T>> listOfLengthUpTo(Arbitrary<T> items, int length) {
@@ -200,7 +198,7 @@ public class Generative {
   }
 
   public <T> Generator<Set<T>> setOfSize(Arbitrary<T> items, int size) {
-    return new SetOf<>(items, size).gen(this);
+    return new SetOf<>(items, new Fixed<>(size)).gen(this);
   }
 
   public <T> Generator<Set<T>> setOfSizeUpTo(Arbitrary<T> items, int length) {
@@ -213,7 +211,9 @@ public class Generative {
   }
 
   public <T> Generator<T> anyOf(T... options) {
-    return new ElementOf<>(Lists.newArrayList(options)).gen(this);
+    List<T> copy = new ArrayList<>();
+    Collections.addAll(copy, options);
+    return new ElementOf<>(copy).gen(this);
   }
 
   public <T> Generator<T> anyOf(Collection<T> options) {
@@ -287,7 +287,9 @@ public class Generative {
     try {
       ByteArrayInputStream in = new ByteArrayInputStream(Hex.decodeHex(encodedIndices.toCharArray()));
       String s = IOUtils.toString(new GZIPInputStream(in));
-      List<Integer> indices = Lists.newArrayList(StringUtils.split(s, ",")).stream()
+      List<String> splits = new ArrayList<>();
+      Collections.addAll(splits, StringUtils.split(s, ","));
+      List<Integer> indices = splits.stream()
           .map(str -> Integer.parseInt(str)).collect(Collectors.toList());
       return indices;
     } catch (IOException | DecoderException e) {
@@ -302,7 +304,7 @@ public class Generative {
       List<Integer> indices = fromString(split[1]);
       return Pair.of(seedLong, indices);
     } else {
-      return Pair.of(seedLong, Lists.newArrayList());
+      return Pair.of(seedLong, new ArrayList<>());
     }
   }
 
@@ -310,7 +312,7 @@ public class Generative {
 
   private static Pair<String, Throwable> shrink(long seed, int testNumber, int variableCount, TestBlock block) {
     int shrinkTestNumber = testNumber;
-    List<Integer> shrinks = Lists.newArrayList();
+    List<Integer> shrinks = new ArrayList<>();
     Throwable lastException = null;
     Generative gen = null;
     while (shrinks.size() < variableCount) {
