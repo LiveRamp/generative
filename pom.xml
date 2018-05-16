@@ -29,9 +29,10 @@
   </modules>
 
   <repositories>
-    <repository>
-      <id>all-snapshots</id>
-      <url>http://library.liveramp.net/artifactory/all-snapshots</url>
+   <repository>
+      <id>liveramp-repositories</id>
+      <name>Liveramp Repositories</name>
+      <url>http://repository.liveramp.com/artifactory/liveramp-repositories</url>
       <snapshots>
         <enabled>true</enabled>
         <updatePolicy>always</updatePolicy>
