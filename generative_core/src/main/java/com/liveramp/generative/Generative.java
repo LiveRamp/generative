@@ -250,11 +250,7 @@ public class Generative {
       block.run(testNumber, gen);
     } catch (Throwable e) {
       if (!shouldShrink) {
-        StringBuilder vars = new StringBuilder("Generated variables were: \n");
-        for (Pair<String, Object> entry : gen.generated) {
-          vars.append(entry.getKey() + " : " + entry.getValue() + "\n");
-        }
-        LOG.info(vars.toString());
+        logGeneratedNamedVars(gen);
         throw new RuntimeException(e);
       } else {
         Pair<String, Throwable> shrinkSeed = shrink(seed, testNumber, gen.index.get(), block);
@@ -266,6 +262,14 @@ public class Generative {
         }
       }
     }
+  }
+
+  private static void logGeneratedNamedVars(Generative gen) {
+    StringBuilder vars = new StringBuilder("Generated variables were: \n");
+    for (Pair<String, Object> entry : gen.generated) {
+      vars.append(entry.getKey() + " : " + entry.getValue() + "\n");
+    }
+    LOG.info(vars.toString());
   }
 
   private static void runTestWithSeed(String seed, int testNumber, TestBlock block) {
@@ -341,11 +345,7 @@ public class Generative {
       }
     }
     LOG.info("Returning shrunken test case - performed " + (shrinkTestNumber - testNumber) + " shrinks");
-    StringBuilder vars = new StringBuilder("Generated variables were: \n");
-    for (Pair<String, Object> entry : gen.generated) {
-      vars.append(entry.getKey() + " : " + entry.getValue() + "\n");
-    }
-    LOG.info(vars.toString());
+    logGeneratedNamedVars(gen);
     return Pair.of(seed + ":" + toString(shrinks), lastException);
   }
 }
