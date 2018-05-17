@@ -250,6 +250,11 @@ public class Generative {
       block.run(testNumber, gen);
     } catch (Throwable e) {
       if (!shouldShrink) {
+        StringBuilder vars = new StringBuilder("Generated variables were: \n");
+        for (Pair<String, Object> entry : gen.generated) {
+          vars.append(entry.getKey() + " : " + entry.getValue() + "\n");
+        }
+        LOG.info(vars.toString());
         throw new RuntimeException(e);
       } else {
         Pair<String, Throwable> shrinkSeed = shrink(seed, testNumber, gen.index.get(), block);

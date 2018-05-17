@@ -10,8 +10,7 @@ import org.junit.Test;
 import static com.liveramp.generative.Generative.*;
 import static org.junit.Assert.assertTrue;
 
-public class TestGenerative {
-
+public class TestGenerative extends GenerativeTestCase {
 
   @Test
   public void testShouldPass() {
@@ -26,7 +25,7 @@ public class TestGenerative {
   public void testAlwaysFails() {
     try {
       runTests(10, (testNumber, g) -> {
-        Integer theInt = g.anyPositiveIntegerLessThan(50).get();
+        Integer theInt = g.namedVar("theNumber").anyPositiveIntegerLessThan(50).get();
         Integer shouldBeEven = theInt * 2;
         assertTrue(shouldBeEven % 2 == 1);
       });
