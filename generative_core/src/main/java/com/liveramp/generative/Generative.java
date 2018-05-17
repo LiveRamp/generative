@@ -202,8 +202,11 @@ public class Generative {
   }
 
   public <T> Generator<Set<T>> setOfSizeUpTo(Arbitrary<T> items, int length) {
-    Integer trueLength = gen.anyPositiveIntegerLessThan(length + 1).get();
-    return setOfSize(items, trueLength);
+    return setOfSize(items, gen.anyPositiveIntegerLessThan(length + 1));
+  }
+
+  public <T> Generator<Set<T>> setOfSize(Arbitrary<T> items, Arbitrary<Integer> length) {
+    return new SetOf<>(items, length).gen(this);
   }
 
   public <T> Generator<Set<T>> setOf(Arbitrary<T> items) {
