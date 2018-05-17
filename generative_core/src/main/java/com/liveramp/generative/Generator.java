@@ -1,5 +1,6 @@
 package com.liveramp.generative;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Function;
@@ -62,5 +63,16 @@ public class Generator<T> implements Arbitrary<T> {
   @Override
   public <R> Generator<R> flatMap(Function<T, Arbitrary<R>> fn) {
     return new Generator<>(internal.flatMap(fn), gen);
+  }
+
+  @Override
+  public Generator<T> disableShrinking() {
+    final Generator<T> internal = this;
+    return new Generator<T>(internal, gen) {
+      @Override
+      public List<T> shrink(T val) {
+        return new ArrayList<>();
+      }
+    };
   }
 }

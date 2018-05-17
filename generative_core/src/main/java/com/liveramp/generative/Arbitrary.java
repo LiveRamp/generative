@@ -74,6 +74,21 @@ public interface Arbitrary<T> {
     return flatMap(fn, null);
   }
 
+  default Arbitrary<T> disableShrinking() {
+    final Arbitrary<T> internal = this;
+    return new Arbitrary<T>() {
+      @Override
+      public T get(Random r) {
+        return internal.get(r);
+      }
+
+      @Override
+      public List<T> shrink(T val) {
+        return new ArrayList<>();
+      }
+    };
+  }
+
   public static <R> Arbitrary<R> join(Arbitrary<Arbitrary<R>> arb) {
     return arb.flatMap(
         Function.identity(),
