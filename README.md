@@ -42,7 +42,7 @@ Integer lessThanNBCouldBeNegative = g.anyIntegerLessThan(n).get();
 ```
 
 #### Seed and variable management
-One really important aspect of generative testing is making sure you can reproduce a test that fails so that you can find and fix the issue. Generating values from a Generative object ensures you use a consistent seed for a given test, and always prints the seed of a failing test in the exception message. Additionally, for getting nice error reports, you can name variables:
+One really important aspect of generative testing is making sure you can reproduce a test that fails so that you can find and fix the issue. Generating values from a Generative object ensures you use a consistent seed for a given test, and always prints the seed of a failing test in the exception message. Additionally, for getting nice error reports and to enable shrinking, you can name variables:
 ```java
  runTests(100, (testNumber, g) -> {
         Integer theInt = g.namedVar("The Number").anyPositiveIntegerLessThan(50).get();
@@ -64,7 +64,7 @@ These seeds can be passed as additional arguments to `runTests` to ensure that o
 
 #### Shrinking
 
-Often a random test will find some edge case, but the data used to find that case will be excessivly large or complicated for figuring out exactly what went wrong. Generatvie implements a primitive form of _shrinking_, which is simplifying input data to find the simplest possible test case that still fails. Generative provides the following interface:
+Often a random test will find some edge case, but the data used to find that case will be excessivly large or complicated for figuring out exactly what went wrong. Generative implements a primitive form of _shrinking_, which is simplifying input data to find the simplest possible test case that still fails. Generative provides the following interface:
 ```java
 public interface Arbitrary<T> {
 
@@ -91,6 +91,8 @@ public interface Arbitrary<T> {
   }
 ```
 This method tries to simplify the test case by using 0 if it's within the bounds and then the bounds themselves to try to find a case that's easier to understand. Alternative values should be provided from simplest to least simple, as the library will use the first value that still fails the test.
+
+It's important to note that Generative will only shrink variables which have been named using the the `namedVar` syntax described above. 
 
 ### Advanced Usage of Arbitrary
 

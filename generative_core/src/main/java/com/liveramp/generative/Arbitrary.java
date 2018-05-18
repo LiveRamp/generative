@@ -94,4 +94,8 @@ public interface Arbitrary<T> {
         Function.identity(),
         Fixed::new);
   }
+
+  default String prettyPrint(T val) {
+    return val.toString();
+  }
 }
