@@ -7,11 +7,14 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
@@ -31,40 +34,49 @@ public class Generative {
   private Random random;
 
   //For dealing with shrinking
-  private AtomicInteger index;
-  private List<Integer> shrinkIndices;
-  private AtomicBoolean lastShrinkExhausted = new AtomicBoolean(false);
+  private Optional<Map<String, ShrinkState>> shrinkStates;
+  private final Map<String, Pair<Object, Arbitrary>> generated;
 
   //For printing nice names for generated variables
-  private final List<Pair<String, Object>> generated;
   private String varName;
+  private final AtomicInteger index;
 
   //Used for generation of "helper" random values that don't need names
   private Generative gen;
 
   public Generative(long seed) {
-    this(seed, new ArrayList<>());
+    this(seed, Optional.empty());
   }
 
-  public Generative(long seed, List<Integer> shrinkIndices) {
+  public Generative(long seed, Map<String, ShrinkState> shrinkStates) {
+    this(seed, Optional.ofNullable(shrinkStates));
+  }
+
+
+  public Generative(long seed, Optional<Map<String, ShrinkState>> shrinkStates) {
     this.seed = seed;
     this.random = new Random(seed);
-    this.shrinkIndices = shrinkIndices;
-    this.index = new AtomicInteger(0);
     this.gen = this;
-    this.generated = new ArrayList<>();
+    this.generated = new HashMap<>();
+    this.shrinkStates = shrinkStates.map(Generative::copyMap);
+    this.index = new AtomicInteger(0);
+  }
+
+  private static Map<String, ShrinkState> copyMap(Map<String, ShrinkState> s) {
+    Map<String, ShrinkState> result = new HashMap<>();
+    result.putAll(s);
+    return result;
   }
 
   //There's almost certainly a less dumb way to do this
   public Generative(Generative g, String name) {
     this.seed = g.seed;
     this.random = g.random;
-    this.shrinkIndices = g.shrinkIndices;
-    this.index = g.index;
     this.generated = g.generated;
     this.varName = name;
-    this.lastShrinkExhausted = g.lastShrinkExhausted;
     this.gen = g;
+    this.shrinkStates = g.shrinkStates;
+    this.index = g.index;
   }
 
   public Random getInternalRandom() {
@@ -76,35 +88,32 @@ public class Generative {
   }
 
   public <T> T generate(Arbitrary<T> arbitrary) {
-    T val = arbitrary.get(random);
 
-    Optional<T> t = attemptShrink(arbitrary, val, index.get());
+    T generatedVal = arbitrary.get(random);
 
-    T returnVal = t.orElse(val);
+    //We only engage shrinking behavior over named variables
+    if (varName != null) {
+      String realVarName = generated.containsKey(varName) ? varName + index.getAndIncrement() : varName;
+      generatedVal = attemptShrink(generatedVal, realVarName);
+      saveNamedVar(realVarName, arbitrary, generatedVal);
+    }
 
-    saveNamedVar(returnVal);
-    index.incrementAndGet();
-    return returnVal;
+    return generatedVal;
   }
 
-  private <T> Optional<T> attemptShrink(Arbitrary<T> arbitrary, T val, int currentIndex) {
-    if (currentIndex < shrinkIndices.size() && shrinkIndices.get(currentIndex) >= 0) {
-      Integer shrinkIndex = shrinkIndices.get(currentIndex);
-      List<T> shrinks = arbitrary.shrink(val);
-      if (shrinkIndex < shrinks.size()) {
-        T t = shrinks.get(shrinkIndex);
-        return Optional.of(t);
-      } else {
-        lastShrinkExhausted.set(true);
-        return Optional.of(val);
+  private <T> T attemptShrink(T generatedVal, String realVarName) {
+    if (shrinkStates.isPresent()) {
+      ShrinkState state = shrinkStates.get().get(realVarName);
+      if (state != null && !state.shrinks.isEmpty()) {
+        generatedVal = (T)state.shrinks.get(state.index);
       }
     }
-    return Optional.empty();
+    return generatedVal;
   }
 
-  private <T> void saveNamedVar(T t) {
+  private <T> void saveNamedVar(String realVarName, Arbitrary<T> arb, T t) {
     if (varName != null) {
-      generated.add(Pair.of(varName, t));
+      generated.put(realVarName, Pair.of(t, arb));
     }
   }
 
@@ -132,22 +141,27 @@ public class Generative {
     return anyBoundedInteger(Integer.MIN_VALUE, endExclusive);
   }
 
-  public Generator<byte[]> anyByteArrayOfLength(int length) {
+  public Generator<byte[]> anyByteArrayOfLength(Arbitrary<Integer> length) {
     return new ArbitraryByteArray(length).gen(this);
   }
 
+
+  public Generator<byte[]> anyByteArrayOfLength(int length) {
+    return new ArbitraryByteArray(new Fixed<>(length)).gen(this);
+  }
+
   public Generator<byte[]> anyByteArrayUpToLength(int length) {
-    return anyByteArrayOfLength(gen.anyPositiveIntegerLessThan(length + 1).get());
+    return anyByteArrayOfLength(gen.anyPositiveIntegerLessThan(length + 1));
   }
 
   public Generator<byte[]> anyByteArray() {
-    return anyByteArrayUpToLength(1024);
+    return anyByteArrayOfLength(gen.anyPositiveIntegerLessThan(1025));
   }
 
   public <T, L extends List<T>> L shuffle(L l) {
     Collections.shuffle(l, random);
     List<T> copy = new ArrayList<>(l);
-    saveNamedVar(copy);
+    //saveNamedVar(copy);
     return l;
   }
 
@@ -253,7 +267,7 @@ public class Generative {
         logGeneratedNamedVars(gen);
         throw new RuntimeException(e);
       } else {
-        Pair<String, Throwable> shrinkSeed = shrink(seed, testNumber, gen.index.get(), block);
+        Pair<String, Throwable> shrinkSeed = shrink(seed, testNumber, gen, block);
         if (shrinkSeed.getRight() != null) {
           throw new RuntimeException("Shrunken test case failed with seed: " + shrinkSeed.getLeft(),
               shrinkSeed.getRight());
@@ -265,87 +279,106 @@ public class Generative {
   }
 
   private static void logGeneratedNamedVars(Generative gen) {
-    StringBuilder vars = new StringBuilder("Generated variables were: \n");
-    for (Pair<String, Object> entry : gen.generated) {
-      vars.append(entry.getKey() + " : " + entry.getValue() + "\n");
+    if (gen != null) {
+      StringBuilder vars = new StringBuilder("Generated variables were: \n");
+      for (Map.Entry<String, Pair<Object, Arbitrary>> entry : gen.generated.entrySet()) {
+        vars.append(entry.getKey() + " : " + entry.getValue().getRight().prettyPrint(entry.getValue().getLeft()) + "\n");
+      }
+      LOG.info(vars.toString());
     }
-    LOG.info(vars.toString());
   }
 
   private static void runTestWithSeed(String seed, int testNumber, TestBlock block) {
+    Generative gen = null;
     try {
-      Pair<Long, List<Integer>> seedVars = parseSeed(seed);
-      block.run(testNumber, new Generative(seedVars.getLeft(), seedVars.getRight()));
-    } catch (Exception e) {
+      Pair<Long, Integer> seedVars = parseSeed(seed);
+      gen = new Generative(seedVars.getLeft());
+
+      if (seedVars.getRight() > -1) {
+        //if we need to shrink, this is a dry run to get initial variables
+        try {
+          block.run(testNumber, gen);
+        } catch (Throwable e) {
+          //don't care about exceptions here - in fact we sort of expect them given how shrunken tests cases are derived
+        }
+        Map<String, ShrinkState> shrinkStates = getShrinkStatesFromGeneratedValues(gen.generated);
+        for (int i = 0; i < seedVars.getRight(); i++) {
+          shrinkStates = iterateShrinkStates(shrinkStates);
+        }
+        gen = new Generative(seedVars.getLeft(), shrinkStates);
+        block.run(testNumber, gen);
+      } else {
+        block.run(testNumber, gen);
+      }
+    } catch (Throwable e) {
+      logGeneratedNamedVars(gen);
       throw new RuntimeException("Error during test while using seed: " + seed, e);
     }
   }
 
-  private static String toString(List<Integer> shrinkIndices) {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    String join = StringUtils.join(shrinkIndices, ",");
-    try {
-      PrintWriter writer = new PrintWriter(new GZIPOutputStream(out));
-      writer.print(join);
-      writer.close();
-      out.close();
-      return Hex.encodeHexString(out.toByteArray());
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private static List<Integer> fromString(String encodedIndices) {
-    try {
-      ByteArrayInputStream in = new ByteArrayInputStream(Hex.decodeHex(encodedIndices.toCharArray()));
-      String s = IOUtils.toString(new GZIPInputStream(in));
-      List<String> splits = new ArrayList<>();
-      Collections.addAll(splits, StringUtils.split(s, ","));
-      List<Integer> indices = splits.stream()
-          .map(str -> Integer.parseInt(str)).collect(Collectors.toList());
-      return indices;
-    } catch (IOException | DecoderException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private static Pair<Long, List<Integer>> parseSeed(String seed) {
+  private static Pair<Long, Integer> parseSeed(String seed) {
     String[] split = StringUtils.split(seed, ";");
     long seedLong = Long.parseLong(split[0]);
     if (split.length > 1) {
-      List<Integer> indices = fromString(split[1]);
-      return Pair.of(seedLong, indices);
+      return Pair.of(seedLong, Integer.parseInt(split[1]));
     } else {
-      return Pair.of(seedLong, new ArrayList<>());
+      return Pair.of(seedLong, -1);
     }
   }
 
   private static Logger LOG = LoggerFactory.getLogger(Generative.class);
 
-  private static Pair<String, Throwable> shrink(long seed, int testNumber, int variableCount, TestBlock block) {
-    int shrinkTestNumber = testNumber;
-    List<Integer> shrinks = new ArrayList<>();
+  private static Pair<String, Throwable> shrink(long seed, int testNumber, Generative originalGen, TestBlock block) {
     Throwable lastException = null;
+    Map<String, Pair<Object, Arbitrary>> generated = originalGen.generated;
+    Map<String, ShrinkState> shrinkStates = getShrinkStatesFromGeneratedValues(generated);
     Generative gen = null;
-    while (shrinks.size() < variableCount) {
-      shrinks.add(0);
-      boolean testPassed = true;
-      boolean shrinkExhausted = false;
-      while (testPassed && !shrinkExhausted) {
-        try {
-          shrinkTestNumber++;
-          gen = new Generative(seed, shrinks);
-          block.run(testNumber, gen);
-          shrinkExhausted = gen.lastShrinkExhausted.get();
-          shrinks.set(shrinks.size() - 1, shrinks.get(shrinks.size() - 1) + 1);
-        } catch (Throwable e) {
-          lastException = e;
-          testPassed = false;
+
+    int shrinksPerformed = 0;
+
+    try {
+      while (shrinkStates != null) {
+        shrinksPerformed++;
+        gen = new Generative(seed, shrinkStates);
+        block.run(testNumber + shrinksPerformed, gen);
+        shrinkStates = iterateShrinkStates(shrinkStates);
+      }
+    } catch (Throwable e) {
+      lastException = e;
+    }
+    LOG.info("Returning shrunken test case - performed " + shrinksPerformed + " shrinks");
+    logGeneratedNamedVars(gen);
+    return Pair.of(seed + ";" + shrinksPerformed, lastException);
+  }
+
+  private static Map<String, ShrinkState> getShrinkStatesFromGeneratedValues(Map<String, Pair<Object, Arbitrary>> generated) {
+    return generated.entrySet().stream().collect(
+        Collectors.toMap(
+            e -> e.getKey(),
+            e -> new ShrinkState<>(e.getValue().getRight().shrink(e.getValue().getLeft()), 0)));
+  }
+
+  private static Map<String, ShrinkState> iterateShrinkStates(Map<String, ShrinkState> shrinkStates) {
+    OptionalInt minIndex = shrinkStates.values().stream().mapToInt(s -> s.index).min();
+    Map<String, ShrinkState> result = copyMap(shrinkStates);
+    if (minIndex.isPresent()) {
+      for (Map.Entry<String, ShrinkState> entry : shrinkStates.entrySet()) {
+        if (entry.getValue().index == minIndex.getAsInt() && entry.getValue().index < entry.getValue().shrinks.size()) {
+          result.put(entry.getKey(), new ShrinkState<>(entry.getValue().shrinks, entry.getValue().index + 1));
+          return result;
         }
       }
     }
-    LOG.info("Returning shrunken test case - performed " + (shrinkTestNumber - testNumber) + " shrinks");
-    logGeneratedNamedVars(gen);
-    return Pair.of(seed + ":" + toString(shrinks), lastException);
+    return null;
+  }
+
+  private static class ShrinkState<T> {
+    private List<T> shrinks;
+    private int index;
+
+    private ShrinkState(List<T> shrinks, int index) {
+      this.shrinks = shrinks;
+      this.index = index;
+    }
   }
 }
