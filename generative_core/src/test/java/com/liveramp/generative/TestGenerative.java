@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 
@@ -77,10 +78,18 @@ public class TestGenerative extends GenerativeTestCase {
   }
 
   @Test
-  public void testSetOfWithGenerator() {
+  public void testArbitraryMap() {
     runTests(10, (testNumber, g) -> {
-      Set<Integer> things = g.setOf(g.anyInteger()).get();
       String gen = g.anyBoolean().map(b -> b ? "RED" : "BLUE").get();
+      Assert.assertTrue(gen.equals("RED") || gen.equals("BLUE"));
+    });
+  }
+
+  @Test
+  public void testSetOfSize() {
+    runTests(10, (testNumber, g) -> {
+      Set<Integer> things = g.namedVar("the set").setOfSize(g.anyBoundedInteger(0, 15), 10).get();
+      Assert.assertEquals(10, things.size());
     });
   }
 }

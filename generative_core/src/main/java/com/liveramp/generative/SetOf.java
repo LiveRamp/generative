@@ -12,7 +12,7 @@ public class SetOf<T> implements Arbitrary<Set<T>> {
   private Arbitrary<Integer> length;
 
   public SetOf(Arbitrary<T> internal, int length) {
-   this(internal, new Fixed<>(length));
+    this(internal, new Fixed<>(length));
   }
 
   public SetOf(Arbitrary<T> internal, Arbitrary<Integer> length) {
@@ -22,7 +22,15 @@ public class SetOf<T> implements Arbitrary<Set<T>> {
 
   @Override
   public Set<T> get(Random r) {
-    return internal.stream(r).limit(length.get(r)).collect(Collectors.toSet());
+    Set<T> result = new HashSet<>();
+    Integer targetLength = length.get(r);
+    //after choosing a length, we keep adding elements until we hit that length
+    //or we've been trying for too long
+    for (int i = 0; i < (targetLength * 10) && result.size() < targetLength; i++) {
+      result.add(internal.get(r));
+    }
+
+    return result;
   }
 
   @Override
