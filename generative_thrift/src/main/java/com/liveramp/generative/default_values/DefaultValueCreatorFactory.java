@@ -68,6 +68,8 @@ public class DefaultValueCreatorFactory implements Function<FieldValueMetaData, 
       } else {
         return PRIMITIVES_TO_VALUE_CREATORS.get(fv.type);
       }
+    } else if (fv.type == TType.ENUM) {
+      return new TEnumValueCreator();
     } else if (fv.type == TType.STRUCT) {
       return structPrim;
     } else {
