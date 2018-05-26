@@ -17,6 +17,15 @@ import com.liveramp.generative.ArbitraryString;
 import com.liveramp.generative.ArbitraryThrift;
 
 /**
+ * The class that determines which value creator we should use for a given field.
+ * Since we have to recursively inspect container classes, their value creators
+ * also require a {@link DefaultValueCreatorFactory}. Strictly, since we don't
+ * check {@link org.apache.thrift.meta_data.FieldMetaData#requirementType} it's
+ * entirely possible that this method doesn't terminate for recursively defined
+ * Thrift structs.
+ *
+ * Therefore, this should only be used for non-recursively defined Thrift structs.
+ *
  * For this and associated classes, the {@link FieldValueMetaData} does not provide
  * sufficient information to actually correctly obtain the type. We cast using the
  * {@link TType} and so we'll get unchecked cast warnings which we should ignore
@@ -72,6 +81,12 @@ public class DefaultValueCreatorFactory implements Function<FieldValueMetaData, 
       return new TEnumValueCreator();
     } else if (fv.type == TType.STRUCT) {
       return structPrim;
+    } else if (fv.type == TType.SET) {
+      return new SetValueCreator(new DefaultValueCreatorFactory());
+    } else if (fv.type == TType.LIST) {
+      return new ListValueCreator(new DefaultValueCreatorFactory());
+    } else if (fv.type == TType.MAP) {
+      return new MapValueCreator<>(new DefaultValueCreatorFactory());
     } else {
       throw new IllegalArgumentException();
     }
