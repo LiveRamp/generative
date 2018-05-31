@@ -58,7 +58,10 @@ public class ArbitraryThrift<T extends TBase> implements Arbitrary<T> {
       for (Map.Entry<? extends TFieldIdEnum, FieldMetaData> entry : entries) {
         Optional<Arbitrary> maybeArbitrary = getArbitrary(entry);
         if (maybeArbitrary.isPresent()) {
-          t.setFieldValue(entry.getKey(), maybeArbitrary.get().get(r));
+          // For required fields we always set them, but for optional fields, it's a coin-flip
+          if (r.nextBoolean() || entry.getValue().requirementType ==  TFieldRequirementType.REQUIRED) {
+            t.setFieldValue(entry.getKey(), maybeArbitrary.get().get(r));
+          }
         }
       }
       if (!(t instanceof TUnion)) {
