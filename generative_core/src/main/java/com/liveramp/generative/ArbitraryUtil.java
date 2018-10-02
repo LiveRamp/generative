@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class AbitraryUtil {
+public class ArbitraryUtil {
 
   public static <T, C extends Collection<T>> List<C> shrinkCollection(C val, Arbitrary<T> internal, Function<List<T>, C> fn, Arbitrary<Integer> length, int valLength) {
 

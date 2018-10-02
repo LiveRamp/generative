@@ -26,7 +26,7 @@ public class ListOf<T> implements Arbitrary<List<T>> {
 
   @Override
   public List<List<T>> shrink(List<T> val) {
-    return AbitraryUtil.shrinkCollection(val, this.internal, Function.identity(), length, val.size());
+    return ArbitraryUtil.shrinkCollection(val, this.internal, Function.identity(), length, val.size());
   }
 
 }

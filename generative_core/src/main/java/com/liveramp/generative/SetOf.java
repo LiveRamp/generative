@@ -4,7 +4,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class SetOf<T> implements Arbitrary<Set<T>> {
 
@@ -35,7 +34,7 @@ public class SetOf<T> implements Arbitrary<Set<T>> {
 
   @Override
   public List<Set<T>> shrink(Set<T> val) {
-    return AbitraryUtil.shrinkCollection(val, internal, l -> new HashSet<>(l), length, val.size());
+    return ArbitraryUtil.shrinkCollection(val, internal, l -> new HashSet<>(l), length, val.size());
   }
 
 }
