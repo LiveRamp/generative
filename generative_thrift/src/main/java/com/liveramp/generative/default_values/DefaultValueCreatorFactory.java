@@ -49,7 +49,7 @@ public class DefaultValueCreatorFactory implements Function<FieldValueMetaData, 
   private static final DefaultValueCreator<Byte> bytePrim =
       fv -> new ArbitraryByteArray(1).map(b -> b[0]);
   private static final DefaultValueCreator structPrim =
-      fv -> new ArbitraryThrift(((StructMetaData)fv).structClass, new HashMap<>());
+      fv -> ArbitraryThrift.builder(((StructMetaData)fv).structClass).build();
   private static final DefaultValueCreator<ByteBuffer> bbPrim =
       f -> new ArbitraryBoundedInt(1, 10)
           .flatMap(ArbitraryByteArray::new, s -> s.length)
