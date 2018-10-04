@@ -23,7 +23,7 @@ public class ListValueCreator implements DefaultValueCreator<List> {
     ListMetaData lv = (ListMetaData)fv;
     DefaultValueCreator<?> elementValueCreator = defaultValueCreatorFactory.apply(lv.elemMetaData);
     Arbitrary<?> arbitraryElement = elementValueCreator.apply(lv.elemMetaData);
-    return new ListOf(arbitraryElement, new ArbitraryBoundedInt(0, 128));
+    return new ListOf(arbitraryElement, new ArbitraryBoundedInt(0, 10));
   }
 
 }

@@ -23,6 +23,6 @@ public class SetValueCreator implements DefaultValueCreator<Set> {
     SetMetaData sv = (SetMetaData)fv;
     DefaultValueCreator<?> elementValueCreator = defaultValueCreatorFactory.apply(sv.elemMetaData);
     Arbitrary<?> arbitraryElement = elementValueCreator.apply(sv.elemMetaData);
-    return new SetOf(arbitraryElement, new ArbitraryBoundedInt(0, 128));
+    return new SetOf(arbitraryElement, new ArbitraryBoundedInt(0, 10));
   }
 }

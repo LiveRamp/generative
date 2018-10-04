@@ -22,6 +22,6 @@ class MapValueCreator<K, V> implements DefaultValueCreator<Map<K, V>> {
     MapMetaData mv = (MapMetaData)fv;
     DefaultValueCreator<K> keyCreator = (DefaultValueCreator<K>)defaultValueCreatorFactory.apply(mv.keyMetaData);
     DefaultValueCreator<V> valueCreator = (DefaultValueCreator<V>)defaultValueCreatorFactory.apply(mv.valueMetaData);
-    return new MapOf<>(keyCreator.apply(mv.keyMetaData), valueCreator.apply(mv.valueMetaData), 128);
+    return new MapOf<>(keyCreator.apply(mv.keyMetaData), valueCreator.apply(mv.valueMetaData), 10);
   }
 }
