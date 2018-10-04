@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import org.apache.thrift.TFieldIdEnum;
 import org.apache.thrift.TUnion;
@@ -22,8 +23,8 @@ class ArbitraryTUnion<T extends TUnion> extends ArbitraryThrift<T> {
   ) {
     super(clazz, fieldArbitraries, Collections.emptyMap());
     this.possibleFields = new ArrayList<>(possibleFields);
-    this.bound = possibleFields.size() + (allowEmpty ? 1 : 0);
-    if (possibleFields.isEmpty() && !allowEmpty) {
+    this.bound = this.possibleFields.size() + (allowEmpty ? 1 : 0);
+    if (this.possibleFields.isEmpty() && !allowEmpty) {
       throw new IllegalStateException("Cannot return empty ");
     }
   }
@@ -46,13 +47,17 @@ class ArbitraryTUnion<T extends TUnion> extends ArbitraryThrift<T> {
   }
 
   @Override
-  public List<T> shrink(T val) {
-    TFieldIdEnum setField = val.getSetField();
+  public List<T> shrink(T original) {
+    TFieldIdEnum setField = original.getSetField();
     if (setField != null) {
       Arbitrary arbitrary = getArbitrary(setField, metadata.get(setField).valueMetaData);
-      T shrink = (T)val.deepCopy();
-      shrink.setFieldValue(setField, arbitrary.shrink(val.getFieldValue()));
-      return Collections.singletonList(shrink);
+      return (List<T>)arbitrary.shrink(original.getFieldValue())
+          .stream()
+          .map(val -> {
+            T copy = (T)original.deepCopy();
+            copy.setFieldValue(setField, val);
+            return copy;
+          }).collect(Collectors.toList());
     } else {
       return Collections.emptyList();
     }

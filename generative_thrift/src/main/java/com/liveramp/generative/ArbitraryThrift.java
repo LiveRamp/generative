@@ -134,8 +134,10 @@ public class ArbitraryThrift<T extends TBase> implements Arbitrary<T> {
       return this;
     }
 
-    public Builder<T> selectFrom(Collection<TFieldIdEnum> fields) {
+    public Builder<T> selectFrom(Collection<? extends TFieldIdEnum> fields) {
       fields.forEach(this::assertFieldExists);
+      possibleFields = new TreeSet<>(new FieldIdComparator());
+
       possibleFields.addAll(fields);
       return this;
     }
@@ -161,7 +163,7 @@ public class ArbitraryThrift<T extends TBase> implements Arbitrary<T> {
     }
   }
 
-  private enum RequirementType {
+  enum RequirementType {
     REQUIRED,
     OPTIONAL,
     UNSET
@@ -279,7 +281,7 @@ public class ArbitraryThrift<T extends TBase> implements Arbitrary<T> {
     }
   }
 
-  private static <T extends TBase> Map<? extends TFieldIdEnum, FieldMetaData> getFieldMetaDataMap(Class<T> clazz) {
+  static <T extends TBase> Map<? extends TFieldIdEnum, FieldMetaData> getFieldMetaDataMap(Class<T> clazz) {
     try {
       return (Map<? extends TFieldIdEnum, FieldMetaData>)clazz.getField("metaDataMap").get(null);
     } catch (IllegalAccessException | NoSuchFieldException e) {
@@ -287,7 +289,7 @@ public class ArbitraryThrift<T extends TBase> implements Arbitrary<T> {
     }
   }
 
-  private RequirementType getRequirementType(byte b) {
+  static RequirementType getRequirementType(byte b) {
     switch (b) {
       case TFieldRequirementType.REQUIRED:
         return RequirementType.REQUIRED;
