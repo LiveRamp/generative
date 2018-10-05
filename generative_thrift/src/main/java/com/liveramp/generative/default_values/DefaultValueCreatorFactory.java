@@ -35,7 +35,7 @@ public class DefaultValueCreatorFactory implements Function<FieldValueMetaData, 
 
   private static final DefaultValueCreator<Boolean> boolPrim = fv -> new ArbitraryBoolean();
   private static final DefaultValueCreator<String> stringPrim =
-      f -> new ArbitraryBoundedInt(1, 256)
+      f -> new ArbitraryBoundedInt(1, 10)
           .flatMap(ArbitraryString::new, String::length);
   private static final DefaultValueCreator<Double> doublePrim =
       fv -> Random::nextDouble;
@@ -51,7 +51,7 @@ public class DefaultValueCreatorFactory implements Function<FieldValueMetaData, 
   private static final DefaultValueCreator structPrim =
       fv -> new ArbitraryThrift(((StructMetaData)fv).structClass, new HashMap<>());
   private static final DefaultValueCreator<ByteBuffer> bbPrim =
-      f -> new ArbitraryBoundedInt(1, 256)
+      f -> new ArbitraryBoundedInt(1, 10)
           .flatMap(ArbitraryByteArray::new, s -> s.length)
           .map(ByteBuffer::wrap, ByteBuffer::array);
 
