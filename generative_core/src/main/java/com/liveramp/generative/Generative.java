@@ -58,14 +58,8 @@ public class Generative {
     this.random = new Random(seed);
     this.gen = this;
     this.generated = new HashMap<>();
-    this.shrinkStates = shrinkStates.map(Generative::copyMap);
+    this.shrinkStates = shrinkStates.map(HashMap::new);
     this.index = new AtomicInteger(0);
-  }
-
-  private static Map<String, ShrinkState> copyMap(Map<String, ShrinkState> s) {
-    Map<String, ShrinkState> result = new HashMap<>();
-    result.putAll(s);
-    return result;
   }
 
   //There's almost certainly a less dumb way to do this
@@ -360,7 +354,7 @@ public class Generative {
 
   private static Map<String, ShrinkState> iterateShrinkStates(Map<String, ShrinkState> shrinkStates) {
     OptionalInt minIndex = shrinkStates.values().stream().mapToInt(s -> s.index).min();
-    Map<String, ShrinkState> result = copyMap(shrinkStates);
+    Map<String, ShrinkState> result = new HashMap<>(shrinkStates);
     if (minIndex.isPresent()) {
       for (Map.Entry<String, ShrinkState> entry : shrinkStates.entrySet()) {
         if (entry.getValue().index == minIndex.getAsInt() && entry.getValue().index < entry.getValue().shrinks.size()) {
