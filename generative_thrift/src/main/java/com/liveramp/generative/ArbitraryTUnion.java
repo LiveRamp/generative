@@ -13,19 +13,16 @@ import org.apache.thrift.TUnion;
 
 class ArbitraryTUnion<T extends TUnion> extends ArbitraryThrift<T> {
   private final List<TFieldIdEnum> possibleFields;
-  private final int bound;
 
   ArbitraryTUnion(
       Class<T> clazz,
       Collection<TFieldIdEnum> possibleFields,
-      Map<TFieldIdEnum, Arbitrary<?>> fieldArbitraries,
-      boolean allowEmpty
+      Map<TFieldIdEnum, Arbitrary<?>> fieldArbitraries
   ) {
     super(clazz, fieldArbitraries, Collections.emptyMap());
     this.possibleFields = new ArrayList<>(possibleFields);
-    this.bound = this.possibleFields.size() + (allowEmpty ? 1 : 0);
-    if (this.possibleFields.isEmpty() && !allowEmpty) {
-      throw new IllegalStateException("Cannot return empty ");
+    if (this.possibleFields.isEmpty()) {
+      throw new IllegalStateException("Empty TUnions are not valid");
     }
   }
 
@@ -33,10 +30,7 @@ class ArbitraryTUnion<T extends TUnion> extends ArbitraryThrift<T> {
   public T get(Random r) {
     try {
       T t = clazz.newInstance();
-      int idx = r.nextInt(bound);
-      if (idx == possibleFields.size()) {
-        return t;
-      }
+      int idx = r.nextInt(possibleFields.size());
       TFieldIdEnum setField = possibleFields.get(idx);
       Arbitrary<?> arbitrary = getArbitrary(setField, metadata.get(setField).valueMetaData);
       t.setFieldValue(setField, arbitrary.get(r));
@@ -49,18 +43,17 @@ class ArbitraryTUnion<T extends TUnion> extends ArbitraryThrift<T> {
   @Override
   public List<T> shrink(T original) {
     TFieldIdEnum setField = original.getSetField();
-    if (setField != null) {
-      Arbitrary arbitrary = getArbitrary(setField, metadata.get(setField).valueMetaData);
-      return (List<T>)arbitrary.shrink(original.getFieldValue())
-          .stream()
-          .map(val -> {
-            T copy = (T)original.deepCopy();
-            copy.setFieldValue(setField, val);
-            return copy;
-          }).collect(Collectors.toList());
-    } else {
-      return Collections.emptyList();
+    if (setField == null) {
+      throw new IllegalStateException("TUnions must have a set field but " + original + " was empty");
     }
+    Arbitrary arbitrary = getArbitrary(setField, metadata.get(setField).valueMetaData);
+    return (List<T>)arbitrary.shrink(original.getFieldValue())
+        .stream()
+        .map(val -> {
+          T copy = (T)original.deepCopy();
+          copy.setFieldValue(setField, val);
+          return copy;
+        }).collect(Collectors.toList());
   }
 
   static boolean isTUnion(Class clazz) {

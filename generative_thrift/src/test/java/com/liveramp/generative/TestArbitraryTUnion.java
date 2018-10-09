@@ -11,19 +11,9 @@ import org.apache.thrift.TUnion;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 public class TestArbitraryTUnion {
   Random r = new Random();
-
-  @Test
-  public void testGetEmptyUnion() {
-    ArbitraryThrift<PrimitiveUnion> arbitrary = ArbitraryThrift.buildUnion(PrimitiveUnion.class)
-        .allowEmpty()
-        .selectFrom()
-        .build();
-    assertNull(arbitrary.get(r).getSetField());
-  }
 
   @Test
   public void testSelectedFieldsChosen() {
@@ -48,15 +38,7 @@ public class TestArbitraryTUnion {
     }
     assertEquals(expected, actual);
   }
-
-  @Test
-  public void testShrinkUnset() {
-    PrimitiveUnion u = new PrimitiveUnion();
-    ArbitraryThrift<PrimitiveUnion> arbitrary = ArbitraryThrift.buildUnion(PrimitiveUnion.class).build();
-    arbitrary.shrink(u);
-    assertNull(u.getSetField());
-  }
-
+  
   @Test
   public void testShrunkUnionHasSameField() {
     for (int i = 0; i < 50; i++) {

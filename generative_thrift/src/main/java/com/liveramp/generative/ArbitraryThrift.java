@@ -120,18 +120,11 @@ public class ArbitraryThrift<T extends TBase> implements Arbitrary<T> {
 
   public static class TUnionBuilder<T extends TUnion> extends Builder<T> {
     private Set<TFieldIdEnum> possibleFields;
-    private boolean allowEmpty;
 
     TUnionBuilder(Class<T> clazz) {
       super(clazz);
       possibleFields = new TreeSet<>(new FieldIdComparator());
       possibleFields.addAll(fieldMetaDataMap.keySet());
-      this.allowEmpty = false;
-    }
-
-    public TUnionBuilder<T> allowEmpty() {
-      this.allowEmpty = true;
-      return this;
     }
 
     public Builder<T> selectFrom(Collection<? extends TFieldIdEnum> fields) {
@@ -159,7 +152,7 @@ public class ArbitraryThrift<T extends TBase> implements Arbitrary<T> {
 
     @Override
     public ArbitraryThrift<T> build() {
-      return new ArbitraryTUnion<>(clazz, possibleFields, fieldArbitraries, allowEmpty);
+      return new ArbitraryTUnion<>(clazz, possibleFields, fieldArbitraries);
     }
   }
 
@@ -186,7 +179,7 @@ public class ArbitraryThrift<T extends TBase> implements Arbitrary<T> {
   ) {
     this(clazz, fieldArbitraries, Collections.emptyMap());
     if (ArbitraryTUnion.isTUnion(clazz)) {
-      arbTUnion = new ArbitraryTUnion(clazz, getFieldMetaDataMap(clazz).keySet(), fieldArbitraries, false);
+      arbTUnion = new ArbitraryTUnion(clazz, getFieldMetaDataMap(clazz).keySet(), fieldArbitraries);
       LOG.warn(String.format("%s is a TUnion and should use %s", clazz.getSimpleName(), ArbitraryTUnion.class.getSimpleName()));
     }
   }
