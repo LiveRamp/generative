@@ -23,9 +23,9 @@ import com.liveramp.generative.ArbitraryThrift;
  * check {@link org.apache.thrift.meta_data.FieldMetaData#requirementType} it's
  * entirely possible that this method doesn't terminate for recursively defined
  * Thrift structs.
- *
+ * <p>
  * Therefore, this should only be used for non-recursively defined Thrift structs.
- *
+ * <p>
  * For this and associated classes, the {@link FieldValueMetaData} does not provide
  * sufficient information to actually correctly obtain the type. We cast using the
  * {@link TType} and so we'll get unchecked cast warnings which we should ignore
@@ -49,7 +49,7 @@ public class DefaultValueCreatorFactory implements Function<FieldValueMetaData, 
   private static final DefaultValueCreator<Byte> bytePrim =
       fv -> new ArbitraryByteArray(1).map(b -> b[0]);
   private static final DefaultValueCreator structPrim =
-      fv -> new ArbitraryThrift(((StructMetaData)fv).structClass, new HashMap<>());
+      fv -> ArbitraryThrift.builder(((StructMetaData)fv).structClass).build();
   private static final DefaultValueCreator<ByteBuffer> bbPrim =
       f -> new ArbitraryBoundedInt(1, 10)
           .flatMap(ArbitraryByteArray::new, s -> s.length)
@@ -72,7 +72,7 @@ public class DefaultValueCreatorFactory implements Function<FieldValueMetaData, 
   @Override
   public DefaultValueCreator<?> apply(FieldValueMetaData fv) {
     if (PRIMITIVES_TO_VALUE_CREATORS.containsKey(fv.type)) {
-      if (fv.isBinary() || fv.getTypedefName() != null) {
+      if (fv.type == TType.STRING && (fv.isBinary() || fv.getTypedefName() != null)) {
         return bbPrim;
       } else {
         return PRIMITIVES_TO_VALUE_CREATORS.get(fv.type);
