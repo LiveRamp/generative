@@ -259,7 +259,7 @@ public class Generative {
     } catch (Throwable e) {
       if (!shouldShrink) {
         logGeneratedNamedVars(gen);
-        throw new RuntimeException(e);
+        throw new RuntimeException("Test case failed with seed: "+ seed, e);
       } else {
         Pair<String, Throwable> shrinkSeed = shrink(seed, testNumber, gen, block);
         if (shrinkSeed.getRight() != null) {
