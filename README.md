@@ -54,7 +54,7 @@ One really important aspect of generative testing is making sure you can reprodu
 The above test produces this error:
 ```
 17/12/01 14:53:40 INFO generative.Generative: Returning shrunken test case - performed 6 shrinks
-17/12/01 14:53:40 INFO generative.Generative: Generated variables were: 
+17/12/01 14:53:40 INFO generative.Generative: Generated variables were:
 The Number : 49
 Multiple : 3
 
@@ -92,7 +92,7 @@ public interface Arbitrary<T> {
 ```
 This method tries to simplify the test case by using 0 if it's within the bounds and then the bounds themselves to try to find a case that's easier to understand. Alternative values should be provided from simplest to least simple, as the library will use the first value that still fails the test.
 
-It's important to note that Generative will only shrink variables which have been named using the the `namedVar` syntax described above. 
+It's important to note that Generative will only shrink variables which have been named using the the `namedVar` syntax described above.
 
 ### Advanced Usage of Arbitrary
 
@@ -119,7 +119,7 @@ The Arbitrary we've created here first uses the root ArbitraryBoundedInteger to 
 
 ```java
 Arbitrary<byte[]> randomlySizedByteArrays = new ArbitraryBoundedInteger(0,10)
-  .flatMap(randomSize -> new ArbitraryByteArray(randomSize), 
+  .flatMap(randomSize -> new ArbitraryByteArray(randomSize),
            aByteArray -> aByteArray.length)
 ```
 
