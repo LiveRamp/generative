@@ -28,20 +28,9 @@
     <dependency>
       <groupId>org.apache.thrift</groupId>
       <artifactId>libthrift</artifactId>
-      <version>0.11.0</version>
+      <version>0.12.0</version>
     </dependency>
 
   </dependencies>
-
-  <repositories>
-    <repository>
-      <id>all-snapshots</id>
-      <url>http://library.liveramp.net/artifactory/all-snapshots</url>
-      <snapshots>
-        <enabled>true</enabled>
-        <updatePolicy>always</updatePolicy>
-      </snapshots>
-    </repository>
-  </repositories>
 
 </project>
