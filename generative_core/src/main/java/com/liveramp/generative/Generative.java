@@ -106,7 +106,7 @@ public class Generative {
   }
 
   public Generator<Integer> anyPositiveInteger() {
-    return anyBoundedInteger(0, Integer.MAX_VALUE);
+    return anyBoundedInteger(1, Integer.MAX_VALUE);
   }
 
   public Generator<Integer> anyBoundedInteger(int startInclusive, int endExclusive) {
@@ -118,7 +118,7 @@ public class Generative {
   }
 
   public Generator<Integer> anyPositiveIntegerLessThan(int endExclusive) {
-    return anyBoundedInteger(0, endExclusive);
+    return anyBoundedInteger(1, endExclusive);
   }
 
   public Generator<Integer> anyIntegerLessThan(int endExclusive) {
