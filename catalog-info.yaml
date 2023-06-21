@@ -1,0 +1,11 @@
+# BEGIN TERRAFORM MANAGED BLOCK
+"apiVersion": "backstage.io/v1alpha1"
+"kind": "Location"
+"metadata":
+  "annotations":
+    "github.com/project-slug": "LiveRamp/generative"
+  "description": "Tools for generative and property based testing in java."
+  "name": "generative"
+  "tags": []
+"spec": {}
+# END TERRAFORM MANAGED BLOCK
